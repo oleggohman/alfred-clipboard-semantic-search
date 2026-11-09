@@ -14,14 +14,30 @@ Fallback chain: if `fm` is missing or fails (5 second timeout), the regex is inv
 
 The regex approach is deliberate. A spike showed the whole clipboard does not fit in the model's context (about 57K tokens of clips against roughly 8K of context), and asking the model to pick matching clips directly had poor recall (2 of 9). Generating a regex from a few examples worked well for common kinds (ip, email, url) and is fast (about 0.5 to 1.5 seconds on a cold query). Rare kinds such as MAC addresses or JWTs can fail, which is what the text fallback is for.
 
-## Requirements
+## Prerequisites
 
 - macOS with Apple Intelligence enabled (provides `/usr/bin/fm`)
 - Alfred 5 with the Powerpack
 - Accessibility permission for Alfred, needed for autopaste
-- The `fm` license accepted once: `sudo fm license`
+- The Foundation Models CLI license accepted (see below)
 
 No third-party Python packages are needed. The workflow runs on the system `/usr/bin/python3` (3.9).
+
+### Accept the `fm` license (one time)
+
+`fm` refuses to run until its Legal Notice & Terms are accepted. Acceptance applies to every user on the Mac, so it must be done with `sudo`:
+
+```
+sudo fm license
+```
+
+Read the terms and agree when prompted. Then check that the model works:
+
+```
+fm respond 'Say OK'
+```
+
+If you skip this step, every `fm` call fails with "YOU HAVE NOT AGREED TO THE FOUNDATION MODELS CLI LEGAL NOTICE & TERMS". The workflow still works in that case, but only through the plain text-search fallback (every result is marked `text`).
 
 ## Install
 
