@@ -76,12 +76,29 @@ class ValidateTests(unittest.TestCase):
             self.assertIsNotNone(regexgen.validate(ok), ok)
 
     def test_catastrophic_pattern_times_out_as_invalid(self):
-        import time
         for bad in (r"([a-z ]+)*[0-9]", r"(\w+\s?)+$[0-9]"):
             start = time.time()
             self.assertIsNone(regexgen.validate(bad), bad)
             self.assertLess(time.time() - start, 2.0, bad)
             self.assertIsNone(regexgen.generate("x", runner=lambda q, b=bad: b), bad)
+
+    def test_late_probe_timeout_does_not_escape(self):
+        with mock.patch.object(regexgen, "_probe", side_effect=regexgen._ProbeTimeout()):
+            self.assertIsNone(regexgen.validate("abc"))
+
+    def test_timeout_during_disarm_does_not_escape(self):
+        real = regexgen.signal.setitimer
+        calls = []
+
+        def fake(which, secs, *a):
+            real(which, secs, *a)
+            calls.append(secs)
+            if len(calls) == 2:  # the disarm right after the probe
+                raise regexgen._ProbeTimeout()
+
+        with mock.patch.object(regexgen.signal, "setitimer", side_effect=fake):
+            self.assertIsNone(regexgen.validate("abc"))
+        self.assertEqual(real(regexgen.signal.ITIMER_REAL, 0)[0], 0.0)
 
     def test_no_ignorecase(self):
         self.assertEqual(regexgen.validate("abc").flags & 2, 0)
@@ -141,6 +158,32 @@ class RunFmTests(unittest.TestCase):
             self.assertIsNone(regexgen.run_fm("ip"))
         time.sleep(2.5)
         self.assertFalse(os.path.exists(marker))
+
+    def test_post_kill_communicate_is_bounded(self):
+        fake = mock.Mock(pid=4242)
+        fake.communicate.side_effect = [
+            subprocess.TimeoutExpired("fm", 5),
+            subprocess.TimeoutExpired("fm", 1),  # pipe held by a setsid grandchild
+        ]
+        with mock.patch("subprocess.Popen", return_value=fake), \
+                mock.patch("os.killpg") as killpg:
+            self.assertIsNone(regexgen.run_fm("ip"))
+        killpg.assert_called_once_with(4242, regexgen.signal.SIGKILL)
+        self.assertEqual(fake.communicate.call_args_list[1], mock.call(timeout=1))
+
+    def test_sigterm_handler_restored_after_spawn_failure(self):
+        prev = regexgen.signal.getsignal(regexgen.signal.SIGTERM)
+        with mock.patch("subprocess.Popen", side_effect=FileNotFoundError()):
+            self.assertIsNone(regexgen.run_fm("ip"))
+        self.assertEqual(regexgen.signal.getsignal(regexgen.signal.SIGTERM), prev)
+
+    def test_sigterm_during_spawn_is_handled(self):
+        def popen(*a, **k):
+            os.kill(os.getpid(), regexgen.signal.SIGTERM)
+            raise AssertionError("handler should have raised SystemExit")
+        with mock.patch("subprocess.Popen", side_effect=popen):
+            with self.assertRaises(SystemExit):
+                regexgen.run_fm("ip")
 
     def test_sigterm_kills_fm_group(self):
         pidfile = os.path.join(self.tmp.name, "pid")

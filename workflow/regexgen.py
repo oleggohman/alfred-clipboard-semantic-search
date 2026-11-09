@@ -71,18 +71,16 @@ def validate(pattern: str) -> Optional["re.Pattern[str]"]:
     # probes, so run them under a time budget; a timeout means invalid.
     prev_handler = signal.signal(signal.SIGALRM, _on_alarm)
     try:
-        signal.setitimer(signal.ITIMER_REAL, VALIDATE_BUDGET)
         try:
+            signal.setitimer(signal.ITIMER_REAL, VALIDATE_BUDGET)
             ok = _probe(compiled)
+            # Disarm inside the try: an alarm landing here still counts as a timeout.
+            signal.setitimer(signal.ITIMER_REAL, 0)
         except _ProbeTimeout:
             ok = False
     finally:
-        # Disarm first, then restore the handler (a late alarm must not hit the default one).
-        try:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-        except _ProbeTimeout:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-            ok = False
+        # The timer is one-shot and has either fired or been disarmed; restore the handler.
+        signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, prev_handler)
     return compiled if ok else None
 
@@ -96,32 +94,39 @@ def _kill_group(proc: "subprocess.Popen[str]") -> None:
 
 def run_fm(query: str) -> Optional[str]:
     fm_path = os.environ.get("CS_FM_PATH", "/usr/bin/fm")
-    try:
-        # Own session so the whole process group can be killed with it.
-        proc = subprocess.Popen(
-            [fm_path, "respond", "--no-stream", "-g", "-i", PROMPT, f"request: {query} ->"],
-            env={**os.environ, "NO_COLOR": "1"},
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-    except OSError:
-        return None
+    proc: "Optional[subprocess.Popen[str]]" = None
 
     def on_term(signum, frame):
         # Alfred kills the previous run when a new query arrives; take fm along.
-        _kill_group(proc)
+        if proc is not None:
+            _kill_group(proc)
         raise SystemExit(1)
 
+    # Installed before Popen so a SIGTERM during spawn cannot orphan fm.
     prev_term = signal.signal(signal.SIGTERM, on_term)
     try:
+        try:
+            # Own session so the whole process group can be killed with it.
+            proc = subprocess.Popen(
+                [fm_path, "respond", "--no-stream", "-g", "-i", PROMPT, f"request: {query} ->"],
+                env={**os.environ, "NO_COLOR": "1"},
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=True,
+            )
+        except OSError:
+            return None
         try:
             stdout, _ = proc.communicate(timeout=FM_TIMEOUT)
         except subprocess.TimeoutExpired:
             _kill_group(proc)
-            proc.communicate()
+            try:
+                # A setsid grandchild may hold the pipes open; do not wait for it.
+                proc.communicate(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
             return None
         except BaseException:
             _kill_group(proc)
