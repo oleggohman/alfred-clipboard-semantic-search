@@ -73,6 +73,14 @@ class ValidateTests(unittest.TestCase):
         for ok in (r"[0-9]{4}-[0-9]{2}-[0-9]{2}", r"\bgit (clone|push)\b", r"https?://\S+"):
             self.assertIsNotNone(regexgen.validate(ok), ok)
 
+    def test_catastrophic_pattern_times_out_as_invalid(self):
+        import time
+        for bad in (r"([a-z ]+)*[0-9]", r"(\w+\s?)+$[0-9]"):
+            start = time.time()
+            self.assertIsNone(regexgen.validate(bad), bad)
+            self.assertLess(time.time() - start, 2.0, bad)
+            self.assertIsNone(regexgen.generate("x", runner=lambda q, b=bad: b), bad)
+
     def test_no_ignorecase(self):
         self.assertEqual(regexgen.validate("abc").flags & 2, 0)
 

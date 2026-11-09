@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import signal
 import subprocess
 import tempfile
 from typing import Callable, Optional
@@ -17,6 +18,7 @@ request: date -> [0-9]{4}-[0-9]{2}-[0-9]{2}"""
 
 FM_TIMEOUT = 5
 MAX_PATTERN_LEN = 500
+VALIDATE_BUDGET = 0.2
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 _PREFIX_RE = re.compile(r"^request:.*?->\s*")
@@ -38,6 +40,26 @@ def parse_fm_output(text: str) -> str:
     return ""
 
 
+class _ProbeTimeout(Exception):
+    pass
+
+
+def _on_alarm(signum, frame):
+    raise _ProbeTimeout()
+
+
+def _probe(compiled: "re.Pattern[str]") -> bool:
+    if compiled.fullmatch(""):
+        return False
+    # zero-width-only or optional-everything patterns (\b, lookaheads, a?)
+    if any(m.end() == m.start() for m in compiled.finditer(_EMPTY_PROBE)):
+        return False
+    # catch-all: matches ordinary prose
+    if any(m.group(0) for m in compiled.finditer(_CATCH_ALL_PROBE)):
+        return False
+    return True
+
+
 def validate(pattern: str) -> Optional["re.Pattern[str]"]:
     if not pattern or len(pattern) > MAX_PATTERN_LEN:
         return None
@@ -45,15 +67,24 @@ def validate(pattern: str) -> Optional["re.Pattern[str]"]:
         compiled = re.compile(pattern)
     except (re.error, RecursionError, OverflowError):
         return None
-    if compiled.fullmatch(""):
-        return None
-    # zero-width-only or optional-everything patterns (\b, lookaheads, a?)
-    if any(m.end() == m.start() for m in compiled.finditer(_EMPTY_PROBE)):
-        return None
-    # catch-all: matches ordinary prose
-    if any(m.group(0) for m in compiled.finditer(_CATCH_ALL_PROBE)):
-        return None
-    return compiled
+    # Model-written patterns can backtrack catastrophically even on the short
+    # probes, so run them under a time budget; a timeout means invalid.
+    prev_handler = signal.signal(signal.SIGALRM, _on_alarm)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, VALIDATE_BUDGET)
+        try:
+            ok = _probe(compiled)
+        except _ProbeTimeout:
+            ok = False
+    finally:
+        # Disarm first, then restore the handler (a late alarm must not hit the default one).
+        try:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+        except _ProbeTimeout:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+            ok = False
+        signal.signal(signal.SIGALRM, prev_handler)
+    return compiled if ok else None
 
 
 def run_fm(query: str) -> Optional[str]:
