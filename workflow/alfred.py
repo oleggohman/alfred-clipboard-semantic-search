@@ -20,6 +20,13 @@ def format_date(ts: float, tz: Optional[timezone] = None) -> str:
     return datetime.fromtimestamp(unix, tz).strftime("%Y-%m-%d %H:%M")
 
 
+def _safe_date(ts) -> str:
+    try:
+        return format_date(ts)
+    except (TypeError, ValueError, OverflowError, OSError):
+        return ""
+
+
 def _oneline(text: str, limit: int) -> str:
     return re.sub(r"\s+", " ", text).strip()[:limit]
 
@@ -29,7 +36,9 @@ def _item(hit, mode: str) -> dict:
     parts = [MARKERS.get(mode, mode)]
     if clip.app:
         parts.append(clip.app)
-    parts.append(format_date(clip.ts))
+    date = _safe_date(clip.ts)
+    if date:
+        parts.append(date)
     if hit.extra > 0:
         parts.append(f"+{hit.extra} more")
     parts.append(_oneline(clip.item, PREVIEW_MAX))
@@ -41,7 +50,7 @@ def _item(hit, mode: str) -> dict:
         "valid": True,
         "text": {"copy": clip.item, "largetype": clip.item},
         "mods": {
-            "cmd": {"arg": hit.match, "subtitle": "Paste matched part only"},
+            "cmd": {"arg": hit.match or clip.item, "subtitle": "Paste matched part only"},
             "alt": {"arg": clip.item, "subtitle": "Copy full clip (no paste)"},
         },
     }

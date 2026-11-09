@@ -104,6 +104,15 @@ class ToItemsTests(unittest.TestCase):
         sub = alfred.to_items([make_hit(app="")], "regex")["items"][0]["subtitle"]
         self.assertEqual(sub, "🧠 regex · 2001-01-01 00:00 · host 10.0.0.1 up")
 
+    def test_null_or_bad_ts_does_not_raise(self):
+        for ts in (None, "junk"):
+            sub = alfred.to_items([make_hit(ts=ts)], "regex")["items"][0]["subtitle"]
+            self.assertEqual(sub, "🧠 regex · Slack · host 10.0.0.1 up")
+
+    def test_cmd_arg_falls_back_to_full_clip_when_match_empty(self):
+        item = alfred.to_items([make_hit(item="whole clip", match="")], "text")["items"][0]
+        self.assertEqual(item["mods"]["cmd"]["arg"], "whole clip")
+
     def test_preview_collapsed_and_capped(self):
         hit = make_hit(item="a\n\n  b " + "c" * 200)
         sub = alfred.to_items([hit], "regex")["items"][0]["subtitle"]
