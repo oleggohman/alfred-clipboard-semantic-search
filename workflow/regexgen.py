@@ -87,21 +87,50 @@ def validate(pattern: str) -> Optional["re.Pattern[str]"]:
     return compiled if ok else None
 
 
+def _kill_group(proc: "subprocess.Popen[str]") -> None:
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except OSError:
+        pass
+
+
 def run_fm(query: str) -> Optional[str]:
     fm_path = os.environ.get("CS_FM_PATH", "/usr/bin/fm")
     try:
-        proc = subprocess.run(
+        # Own session so the whole process group can be killed with it.
+        proc = subprocess.Popen(
             [fm_path, "respond", "--no-stream", "-g", "-i", PROMPT, f"request: {query} ->"],
             env={**os.environ, "NO_COLOR": "1"},
-            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=FM_TIMEOUT,
+            start_new_session=True,
         )
-    except (subprocess.TimeoutExpired, OSError):
+    except OSError:
         return None
+
+    def on_term(signum, frame):
+        # Alfred kills the previous run when a new query arrives; take fm along.
+        _kill_group(proc)
+        raise SystemExit(1)
+
+    prev_term = signal.signal(signal.SIGTERM, on_term)
+    try:
+        try:
+            stdout, _ = proc.communicate(timeout=FM_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            _kill_group(proc)
+            proc.communicate()
+            return None
+        except BaseException:
+            _kill_group(proc)
+            raise
+    finally:
+        signal.signal(signal.SIGTERM, prev_term)
     if proc.returncode != 0:
         return None
-    return proc.stdout
+    return stdout
 
 
 def generate(query: str, runner: Callable[[str], Optional[str]] = run_fm) -> Optional[str]:

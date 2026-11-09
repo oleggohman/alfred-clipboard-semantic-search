@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -99,38 +101,64 @@ class GenerateTests(unittest.TestCase):
 
 
 class RunFmTests(unittest.TestCase):
-    def _cp(self, rc=0, out="x"):
-        return subprocess.CompletedProcess([], rc, stdout=out, stderr="")
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def _script(self, body):
+        path = os.path.join(self.tmp.name, "fm")
+        with open(path, "w") as f:
+            f.write("#!/bin/sh\n" + body + "\n")
+        os.chmod(path, 0o755)
+        return path
 
     def test_success_and_args(self):
-        with mock.patch.dict(os.environ, {"FOO": "bar"}, clear=False), \
-                mock.patch("subprocess.run", return_value=self._cp(out="abc\n")) as run:
-            os.environ.pop("CS_FM_PATH", None)
-            self.assertEqual(regexgen.run_fm("ip"), "abc\n")
-        args, kwargs = run.call_args
-        self.assertEqual(args[0][:5], ["/usr/bin/fm", "respond", "--no-stream", "-g", "-i"])
-        self.assertEqual(args[0][5], regexgen.PROMPT)
-        self.assertEqual(args[0][6], "request: ip ->")
-        self.assertEqual(kwargs["timeout"], 5)
-        self.assertEqual(kwargs["env"]["NO_COLOR"], "1")
-        self.assertEqual(kwargs["env"]["FOO"], "bar")
+        out = os.path.join(self.tmp.name, "args")
+        fm = self._script('printf "%s\\n" "$@" > ' + out + '; echo "$NO_COLOR $FOO"')
+        with mock.patch.dict(os.environ, {"CS_FM_PATH": fm, "FOO": "bar"}):
+            self.assertEqual(regexgen.run_fm("ip"), "1 bar\n")
+        with open(out) as f:
+            args = f.read().split("\n")
+        self.assertEqual(args[:5], ["respond", "--no-stream", "-g", "-i", regexgen.PROMPT.split("\n")[0]])
+        self.assertEqual(args[-2], "request: ip ->")
 
-    def test_fm_path_override(self):
-        with mock.patch.dict(os.environ, {"CS_FM_PATH": "/x/fm"}), \
-                mock.patch("subprocess.run", return_value=self._cp()) as run:
-            regexgen.run_fm("ip")
-        self.assertEqual(run.call_args[0][0][0], "/x/fm")
+    def test_default_path(self):
+        with mock.patch.dict(os.environ), mock.patch("subprocess.Popen", side_effect=FileNotFoundError()) as p:
+            os.environ.pop("CS_FM_PATH", None)
+            self.assertIsNone(regexgen.run_fm("ip"))
+        self.assertEqual(p.call_args[0][0][0], "/usr/bin/fm")
 
     def test_failures(self):
-        for effect in (
-            subprocess.TimeoutExpired("fm", 5),
-            FileNotFoundError(),
-            PermissionError(),
-        ):
-            with mock.patch("subprocess.run", side_effect=effect):
-                self.assertIsNone(regexgen.run_fm("ip"))
-        with mock.patch("subprocess.run", return_value=self._cp(rc=1)):
+        with mock.patch.dict(os.environ, {"CS_FM_PATH": os.path.join(self.tmp.name, "missing")}):
             self.assertIsNone(regexgen.run_fm("ip"))
+        with mock.patch.dict(os.environ, {"CS_FM_PATH": self._script("exit 1")}):
+            self.assertIsNone(regexgen.run_fm("ip"))
+
+    def test_timeout_kills_process_group(self):
+        marker = os.path.join(self.tmp.name, "child_alive")
+        fm = self._script("(sleep 2; touch %s) &\nsleep 30" % marker)
+        with mock.patch.dict(os.environ, {"CS_FM_PATH": fm}), mock.patch.object(regexgen, "FM_TIMEOUT", 0.3):
+            self.assertIsNone(regexgen.run_fm("ip"))
+        time.sleep(2.5)
+        self.assertFalse(os.path.exists(marker))
+
+    def test_sigterm_kills_fm_group(self):
+        pidfile = os.path.join(self.tmp.name, "pid")
+        fm = self._script("echo $$ > %s\nsleep 30" % pidfile)
+        code = ("import sys,os; sys.path.insert(0, %r); import regexgen; regexgen.run_fm('ip')"
+                % os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "workflow"))
+        proc = subprocess.Popen([sys.executable, "-c", code], env={**os.environ, "CS_FM_PATH": fm})
+        for _ in range(50):
+            if os.path.exists(pidfile) and os.path.getsize(pidfile):
+                break
+            time.sleep(0.1)
+        with open(pidfile) as f:
+            fm_pid = int(f.read())
+        proc.terminate()
+        proc.wait(timeout=5)
+        time.sleep(0.3)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(fm_pid, 0)
 
 
 class CacheTests(unittest.TestCase):
