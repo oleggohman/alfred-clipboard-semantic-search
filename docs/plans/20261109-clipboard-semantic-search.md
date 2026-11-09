@@ -192,10 +192,10 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - Create: `build.sh`
 - Create: `tests/test_package.py`
 
-- [ ] write tests: `plutil -lint workflow/info.plist` passes; `plistlib` checks keyword `cs`, script `/usr/bin/python3 cs.py "$1"`, Script Filter keys from Technical Details, two clipboard outputs (autopaste true/false, `clipboardtext` `{query}`), three connections with modifiers 0 / 1048576 → autopaste, 524288 → no autopaste, bundle id
-- [ ] write test: `build.sh <tmpdir>` produces `ClipboardSemanticSearch.alfredworkflow` containing `info.plist`, `cs.py`, `regexgen.py`, `clipdb.py`, `alfred.py`; no `__pycache__`, `.pyc`, `.DS_Store`, `tests/`
-- [ ] create `workflow/info.plist` and `build.sh` (executable)
-- [ ] run tests - must pass before task 6
+- [x] write tests: `plutil -lint workflow/info.plist` passes; `plistlib` checks keyword `cs`, script `/usr/bin/python3 cs.py "$1"`, Script Filter keys from Technical Details, two clipboard outputs (autopaste true/false, `clipboardtext` `{query}`), three connections with modifiers 0 / 1048576 → autopaste, 524288 → no autopaste, bundle id
+- [x] write test: `build.sh <tmpdir>` produces `ClipboardSemanticSearch.alfredworkflow` containing `info.plist`, `cs.py`, `regexgen.py`, `clipdb.py`, `alfred.py`; no `__pycache__`, `.pyc`, `.DS_Store`, `tests/`
+- [x] create `workflow/info.plist` and `build.sh` (executable)
+- [x] run tests - must pass before task 6
 
 ### Task 6: Verify acceptance criteria
 - [ ] create `scripts/smoke.sh`: runs `cd workflow && /usr/bin/python3 cs.py "<q>"` against the real DB with a temp `alfred_workflow_cache`, prints mode + hit count + elapsed (never prints clip contents)
