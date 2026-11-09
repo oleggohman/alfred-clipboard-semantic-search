@@ -198,12 +198,12 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - [x] run tests - must pass before task 6
 
 ### Task 6: Verify acceptance criteria
-- [ ] create `scripts/smoke.sh`: runs `cd workflow && /usr/bin/python3 cs.py "<q>"` against the real DB with a temp `alfred_workflow_cache`, prints mode + hit count + elapsed (never prints clip contents)
-- [ ] run smoke (sandbox disabled, real `fm`): `ip` → regex, ~51 hits; `email` → regex; `url` → regex; `zzqqxx nonsense` → "No clips match"; second `ip` run hits cache (<300ms)
-- [ ] simulate `fm` missing: `CS_FM_PATH=/nonexistent` smoke run → text mode still returns results
-- [ ] run full test suite: `/usr/bin/python3 -m unittest discover -s tests -t . -v`
-- [ ] run lint: `ruff check workflow tests` (if installed) and `py_compile`
-- [ ] run `./build.sh` → `dist/ClipboardSemanticSearch.alfredworkflow`
+- [x] create `scripts/smoke.sh`: runs `cd workflow && /usr/bin/python3 cs.py "<q>"` against the real DB with a temp `alfred_workflow_cache`, prints mode + hit count + elapsed (never prints clip contents) (done: scripts/smoke.sh prints only mode, hit count, elapsed, cached regex)
+- [x] run smoke (sandbox disabled, real `fm`): `ip` → regex, ~51 hits; `email` → regex; `url` → regex; `zzqqxx nonsense` → "No clips match"; second `ip` run hits cache (<300ms) (done: ip -> regex, 51 hits, 2.08s cold fm; email -> regex, 26 hits, 1.06s; url -> regex, 100 hits (result cap), 0.64s; zzqqxx nonsense -> No clips match, 0.76s; second ip cached 0.08s. regexes: ip `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`, email `\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b`, url `\bhttps?://[^\s]+`)
+- [x] simulate `fm` missing: `CS_FM_PATH=/nonexistent` smoke run → text mode still returns results (done: ip with CS_FM_PATH=/nonexistent -> text mode, 100 hits, 0.09s)
+- [x] run full test suite: `/usr/bin/python3 -m unittest discover -s tests -t . -v` (done: 98 tests OK)
+- [x] run lint: `ruff check workflow tests` (if installed) and `py_compile` (done: py_compile + plutil -lint OK; ruff not installed, skipped)
+- [x] run `./build.sh` → `dist/ClipboardSemanticSearch.alfredworkflow` (done: dist/ClipboardSemanticSearch.alfredworkflow, 6.5K)
 
 ### Task 7: [Final] Update documentation
 - [ ] create `README.md`: what it does, install (double-click `.alfredworkflow`), requirements (macOS with Apple Intelligence, `sudo fm license` once, Alfred Powerpack, Accessibility permission for autopaste), usage + modifier keys, fallback behavior, cache reset (delete `regex_cache.json`), note that pasting re-adds the clip to history, build/test commands
