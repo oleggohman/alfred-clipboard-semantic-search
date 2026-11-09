@@ -206,9 +206,9 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - [x] run `./build.sh` → `dist/ClipboardSemanticSearch.alfredworkflow` (done: dist/ClipboardSemanticSearch.alfredworkflow, 6.5K)
 
 ### Task 7: [Final] Update documentation
-- [ ] create `README.md`: what it does, install (double-click `.alfredworkflow`), requirements (macOS with Apple Intelligence, `sudo fm license` once, Alfred Powerpack, Accessibility permission for autopaste), usage + modifier keys, fallback behavior, cache reset (delete `regex_cache.json`), note that pasting re-adds the clip to history, build/test commands
-- [ ] create `CLAUDE.md`: Python 3.9 stdlib-only + `from __future__ import annotations`, flat `workflow/` imports, test/lint/build commands, `fm` sandbox note, never commit clipboard contents
-- [ ] move this plan to `docs/plans/completed/`
+- [x] create `README.md`: what it does, install (double-click `.alfredworkflow`), requirements (macOS with Apple Intelligence, `sudo fm license` once, Alfred Powerpack, Accessibility permission for autopaste), usage + modifier keys, fallback behavior, cache reset (delete `regex_cache.json`), note that pasting re-adds the clip to history, build/test commands
+- [x] create `CLAUDE.md`: Python 3.9 stdlib-only + `from __future__ import annotations`, flat `workflow/` imports, test/lint/build commands, `fm` sandbox note, never commit clipboard contents
+- [x] move this plan to `docs/plans/completed/` (deferred to orchestrator)
 
 ## Post-Completion
 *Items requiring manual intervention - informational only*

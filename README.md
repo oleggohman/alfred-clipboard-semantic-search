@@ -1,0 +1,71 @@
+# Clipboard Semantic Search
+
+An Alfred 5 workflow that searches your clipboard history by the kind of data, not by literal text.
+
+Alfred's built-in clipboard search matches literal text, so typing `ip` never finds `10.0.0.1`. With this workflow, `cs ip` lists every clip that contains an IP address, and the result title shows the address itself. `cs email`, `cs url` and similar queries work the same way.
+
+## How it works
+
+1. Your query (`ip`) goes to Apple's on-device Foundation Model through the `fm` CLI (`/usr/bin/fm`). It returns a regular expression for that kind of data.
+2. The output is cleaned (backticks, code fences, echoed prompt, `/.../` delimiters) and validated. Patterns that fail to compile, exceed 500 characters, match the empty string or match ordinary prose are rejected.
+3. The regex runs over your text clips, newest first (first 20,000 characters of each clip, 2 second budget, at most 100 results). A regex that worked is cached per query, so repeated queries skip `fm`.
+
+Fallback chain: if `fm` is missing or fails (5 second timeout), the regex is invalid, matches nearly everything, or matches nothing, the workflow falls back to a plain case-insensitive text search where every word of the query must appear in the clip. Results are marked `regex` or `text` in the subtitle.
+
+The regex approach is deliberate. A spike showed the whole clipboard does not fit in the model's context (about 57K tokens of clips against roughly 8K of context), and asking the model to pick matching clips directly had poor recall (2 of 9). Generating a regex from a few examples worked well for common kinds (ip, email, url) and is fast (about 0.5 to 1.5 seconds on a cold query). Rare kinds such as MAC addresses or JWTs can fail, which is what the text fallback is for.
+
+## Requirements
+
+- macOS with Apple Intelligence enabled (provides `/usr/bin/fm`)
+- Alfred 5 with the Powerpack
+- Accessibility permission for Alfred, needed for autopaste
+- The `fm` license accepted once: `sudo fm license`
+
+No third-party Python packages are needed. The workflow runs on the system `/usr/bin/python3` (3.9).
+
+## Install
+
+Build the archive (or take `ClipboardSemanticSearch.alfredworkflow` from a release) and double-click it:
+
+```
+./build.sh
+open dist/ClipboardSemanticSearch.alfredworkflow
+```
+
+## Usage
+
+Type `cs <kind of data>` in Alfred, for example `cs ip`.
+
+| Key | Action |
+| --- | --- |
+| Enter | Paste the full clip |
+| ⌘Enter | Paste only the matched part (the IP, the email, ...) |
+| ⌥Enter | Copy the full clip without pasting |
+| ⌘L | Show the full clip in Large Type |
+
+A clip with several matches shows the first one, with `+N more` in the subtitle. Pasting puts the text on the clipboard again, so it is added to Alfred's history as a new entry.
+
+## Privacy
+
+Everything is local. The Alfred clipboard database (`~/Library/Application Support/Alfred/Databases/clipboard.alfdb`) is opened read-only. The only thing passed to the model is your short query, never clip contents. Nothing is sent over the network, and no clip contents are written to disk. The cache stores only query-to-regex pairs.
+
+## Troubleshooting
+
+- Every search shows `text` mode: `fm` is not working. Run `sudo fm license` once, and check that Apple Intelligence is turned on in System Settings.
+- Enter copies but does not paste: grant Alfred Accessibility permission in System Settings > Privacy & Security.
+- A query keeps returning a bad regex: reset the cache by deleting `regex_cache.json` from the workflow cache directory (in Alfred, Workflows > right-click the workflow > Open in Finder is the workflow folder; the cache is under `~/Library/Caches/com.runningwithcrayons.Alfred/Workflow Data/com.oleggohman.clipboard-semantic-search/`; outside Alfred it is `~/Library/Caches/clipboard-semantic-search/`). A regex that finds nothing, matches nearly everything or times out is dropped from the cache automatically.
+- `CS_FM_PATH` overrides the `fm` binary path (default `/usr/bin/fm`). It is used by tests and the smoke script.
+- `fm` fails with ModelManagerError 1008 when run inside some sandboxes. That does not affect Alfred.
+
+## Development
+
+```
+/usr/bin/python3 -m unittest discover -s tests -t . -v   # tests, same interpreter Alfred uses
+ruff check workflow tests                                # if ruff is installed
+/usr/bin/python3 -m py_compile workflow/*.py             # syntax check
+plutil -lint workflow/info.plist
+./build.sh [outdir]                                      # builds dist/ClipboardSemanticSearch.alfredworkflow
+scripts/smoke.sh "ip"                                    # real fm + real clipboard DB
+```
+
+`scripts/smoke.sh` prints only the mode, hit count, elapsed time and the cached regex, never clip contents. Unit tests use a temporary SQLite file and a fake `fm`.

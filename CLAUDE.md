@@ -1,0 +1,12 @@
+# Project conventions
+
+Alfred 5 workflow (`cs <query>`) that searches clipboard history by kind of data using `fm` to generate a regex. See README.md for behavior.
+
+- Python 3.9, stdlib only (Alfred runs `/usr/bin/python3` 3.9.6). Every module starts with `from __future__ import annotations`. No `match`, no 3.10+ APIs.
+- `workflow/` is a flat directory, not a package: modules import siblings as top-level (`import regexgen`). `tests/__init__.py` adds `workflow/` to `sys.path`.
+- Tests: `/usr/bin/python3 -m unittest discover -s tests -t . -v` (py_compile does not catch 3.9 incompatibilities). Never call the real `fm` or the real Alfred DB in unit tests; inject fakes and use temp SQLite files.
+- Lint: `ruff check workflow tests` (if installed) and `/usr/bin/python3 -m py_compile workflow/*.py`; `plutil -lint workflow/info.plist`.
+- Build: `./build.sh [outdir]` (default `dist/`, git-ignored). Smoke: `scripts/smoke.sh "<query>"`.
+- `fm` fails with ModelManagerError 1008 inside Claude's sandbox; run real-`fm` checks with the sandbox disabled. `CS_FM_PATH` overrides the binary.
+- Never commit clipboard contents, and never print them in logs, tests, docs or smoke output.
+- Work on a feature branch, Conventional Commits.
