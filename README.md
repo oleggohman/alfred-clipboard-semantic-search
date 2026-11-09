@@ -25,12 +25,16 @@ No third-party Python packages are needed. The workflow runs on the system `/usr
 
 ## Install
 
-Build the archive (or take `ClipboardSemanticSearch.alfredworkflow` from a release) and double-click it:
+Clone the repo, build the archive and open it. Alfred shows its import dialog:
 
 ```
+git clone https://github.com/oleggohman/alfred-clipboard-semantic-search.git
+cd alfred-clipboard-semantic-search
 ./build.sh
 open dist/ClipboardSemanticSearch.alfredworkflow
 ```
+
+If `cs` does not respond after installing, open Alfred Preferences > Workflows once so Alfred reloads its workflow list.
 
 ## Usage
 
@@ -42,6 +46,15 @@ Type `cs <kind of data>` in Alfred, for example `cs ip`.
 | ⌘Enter | Paste only the matched part (the IP, the email, ...) |
 | ⌥Enter | Copy the full clip without pasting |
 | ⌘L | Show the full clip in Large Type |
+
+Example queries, measured on a real history of about 1,300 text clips:
+
+| Query | Mode | Result | Time |
+| --- | --- | --- | --- |
+| `cs ip` | regex | 51 clips | 2.3 s cold, 0.09 s cached |
+| `cs email` | regex | 26 clips | 1.1 s |
+| `cs url` | regex | 100 clips (result cap) | 0.6 s |
+| `cs docker` (with `fm` unavailable) | text | 26 clips | 0.09 s |
 
 A clip with several matches shows the first one, with `+N more` in the subtitle. Pasting and copying are marked transient, so they are not added to Alfred's clipboard history again. Clip text is copied verbatim (dynamic placeholders such as `{date}` are not expanded).
 
