@@ -77,6 +77,9 @@ class PlistTests(unittest.TestCase):
         for o in outs:
             self.assertEqual(o["version"], 3)
             self.assertEqual(o["config"]["clipboardtext"], "{query}")
+            # clip text must be copied verbatim, and not re-recorded in history
+            self.assertIs(o["config"]["ignoredynamicplaceholders"], True)
+            self.assertIs(o["config"]["transient"], True)
 
     def test_connections(self):
         sf = self.by_type("alfred.workflow.input.scriptfilter")[0]

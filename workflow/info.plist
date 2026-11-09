@@ -105,9 +105,9 @@
 				<key>clipboardtext</key>
 				<string>{query}</string>
 				<key>ignoredynamicplaceholders</key>
-				<false/>
+				<true/>
 				<key>transient</key>
-				<false/>
+				<true/>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.clipboard</string>
@@ -124,9 +124,9 @@
 				<key>clipboardtext</key>
 				<string>{query}</string>
 				<key>ignoredynamicplaceholders</key>
-				<false/>
+				<true/>
 				<key>transient</key>
-				<false/>
+				<true/>
 			</dict>
 			<key>type</key>
 			<string>alfred.workflow.output.clipboard</string>

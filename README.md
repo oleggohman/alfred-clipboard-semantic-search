@@ -43,7 +43,7 @@ Type `cs <kind of data>` in Alfred, for example `cs ip`.
 | ⌥Enter | Copy the full clip without pasting |
 | ⌘L | Show the full clip in Large Type |
 
-A clip with several matches shows the first one, with `+N more` in the subtitle. Pasting puts the text on the clipboard again, so it is added to Alfred's history as a new entry.
+A clip with several matches shows the first one, with `+N more` in the subtitle. Pasting and copying are marked transient, so they are not added to Alfred's clipboard history again. Clip text is copied verbatim (dynamic placeholders such as `{date}` are not expanded).
 
 ## Privacy
 
