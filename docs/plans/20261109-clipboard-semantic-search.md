@@ -170,7 +170,7 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - Create: `workflow/cs.py`
 - Create: `tests/test_cs.py`
 
-- [ ] write `cs.run` tests with fake generator, temp DB, temp cache:
+- [x] write `cs.run` tests with fake generator, temp DB, temp cache:
   - regex path: cache miss → generate → hits → cache put after search
   - cache hit skips generator
   - generator returns None → text mode
@@ -181,9 +181,9 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
   - text mode 0 hits → "No clips match" item
   - DB error → error item
   - empty query → hint item (defensive)
-- [ ] write `main()` test: unexpected exception inside `run` → prints valid JSON error item, exit code 0
-- [ ] implement `workflow/cs.py` until tests pass
-- [ ] run tests - must pass before task 5
+- [x] write `main()` test: unexpected exception inside `run` → prints valid JSON error item, exit code 0
+- [x] implement `workflow/cs.py` until tests pass
+- [x] run tests - must pass before task 5
 
 ### Task 5: Alfred workflow definition + packaging
 
