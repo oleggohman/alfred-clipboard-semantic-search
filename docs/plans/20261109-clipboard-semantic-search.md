@@ -146,11 +146,11 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - Create: `workflow/clipdb.py`
 - Create: `tests/test_clipdb.py`
 
-- [ ] write `load_clips` tests (temp SQLite, Alfred schema): only `dataType=0`, newest first, NULL item skipped, NULL app → `""`, invalid-UTF-8 row (`CAST(x'fffe41' AS TEXT)`) loads with replacement chars, read-only (write fails), missing DB → `ClipDBError`
-- [ ] write `regex_search` tests: hits + matched text, `extra` count, zero-length-only matches → no hit, 0 hits, limit respected while `matched_total` counts all, 20K-char cap, ReDoS `(a+)+b` on `"a"*30` with budget 0.3 returns `timed_out=True` in <1s, SIGALRM handler restored afterwards, two back-to-back calls with budget 0.3 leave no stray alarm (sleep 0.5 after, process alive)
-- [ ] write `text_search` tests: all-words AND, case-insensitive, `match` = first line containing first word, limit, empty query → `[]`
-- [ ] implement `workflow/clipdb.py` until tests pass
-- [ ] run tests - must pass before task 3
+- [x] write `load_clips` tests (temp SQLite, Alfred schema): only `dataType=0`, newest first, NULL item skipped, NULL app → `""`, invalid-UTF-8 row (`CAST(x'fffe41' AS TEXT)`) loads with replacement chars, read-only (write fails), missing DB → `ClipDBError`
+- [x] write `regex_search` tests: hits + matched text, `extra` count, zero-length-only matches → no hit, 0 hits, limit respected while `matched_total` counts all, 20K-char cap, ReDoS `(a+)+b` on `"a"*30` with budget 0.3 returns `timed_out=True` in <1s, SIGALRM handler restored afterwards, two back-to-back calls with budget 0.3 leave no stray alarm (sleep 0.5 after, process alive)
+- [x] write `text_search` tests: all-words AND, case-insensitive, `match` = first line containing first word, limit, empty query → `[]`
+- [x] implement `workflow/clipdb.py` until tests pass
+- [x] run tests - must pass before task 3
 
 ### Task 3: Alfred JSON formatting
 
