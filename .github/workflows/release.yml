@@ -63,8 +63,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if view_err="$(gh release view "$TAG" 2>&1 >/dev/null)"; then
             gh release upload "$TAG" "$ASSET" --clobber
-          else
+          elif [[ "$view_err" == *"release not found"* ]]; then
             gh release create "$TAG" "$ASSET" --title "$TAG" --generate-notes --verify-tag
+          else
+            echo "::error::gh release view failed: $view_err"
+            exit 1
           fi

@@ -45,6 +45,10 @@ if [ "$current" != "$version" ]; then
 fi
 
 git tag -a "$tag" -m "$tag"
-git push --atomic origin main "$tag"
+if ! git push --atomic origin main "$tag"; then
+    echo "release: push failed; the local release commit/tag were not published. To retry from scratch:" >&2
+    echo "  git tag -d $tag && git reset --hard origin/main" >&2
+    exit 1
+fi
 echo "Pushed $tag. The Release workflow builds and uploads the package:"
 echo "  gh run watch \$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"

@@ -204,7 +204,25 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn("./build.sh dist", yml)
         self.assertIn("dist/ClipboardSemanticSearch.alfredworkflow", yml)
         self.assertIn("gh release create", yml)
+        self.assertIn("--verify-tag", yml)
         self.assertIn("contents: write", yml)
+
+    def test_release_workflow_run_blocks_have_no_expressions(self):
+        # ${{ }} inside run: is a script-injection vector; inputs must reach shell via env only.
+        with open(RELEASE_YML, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        in_run, run_indent = False, 0
+        for line in lines:
+            stripped = line.lstrip()
+            indent = len(line) - len(stripped)
+            if in_run and stripped and indent <= run_indent:
+                in_run = False
+            if stripped.startswith("run:") or stripped.startswith("- run:"):
+                in_run, run_indent = True, indent
+                self.assertNotIn("${{", stripped)
+                continue
+            if in_run:
+                self.assertNotIn("${{", line)
 
 
 if __name__ == "__main__":
