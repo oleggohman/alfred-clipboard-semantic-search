@@ -5,8 +5,13 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 query="${1:?usage: smoke.sh \"<query>\" [cache_dir]}"
-cache="${2:-${TMPDIR:-/tmp}/cs-smoke-cache}"
-mkdir -p "$cache"
+if [ -n "${2:-}" ]; then
+    cache="$2"
+    mkdir -p "$cache"
+else
+    cache="$(mktemp -d "${TMPDIR:-/tmp}/cs-smoke.XXXXXX")"
+    trap 'rm -rf "$cache"' EXIT
+fi
 export alfred_workflow_cache="$cache"
 
 start=$(/usr/bin/python3 -c 'import time; print(time.time())')
