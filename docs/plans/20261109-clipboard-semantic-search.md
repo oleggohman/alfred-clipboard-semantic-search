@@ -131,14 +131,14 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - Create: `workflow/regexgen.py`
 - Create: `tests/test_regexgen.py`
 
-- [ ] create `tests/__init__.py` inserting `<repo>/workflow` into `sys.path`
-- [ ] write tests for `PROMPT`: `"\\b" in PROMPT`, `"\x08" not in PROMPT`, contains all 4 examples
-- [ ] write tests for `parse_fm_output`: plain regex, backtick-wrapped, ```` ```regex ```` fence, `request: ip -> ` prefix echo, ANSI codes, leading blank lines, `/pattern/` delimiters
-- [ ] write tests for `validate`: valid IP regex OK; invalid syntax, `.*`, `a?`, `\b`, `(?=\d)`, `\S+`, `\w+`, `.`, >500 chars → None
-- [ ] write tests for `generate`/`run_fm` with fake runner and patched `subprocess.run`: success; non-zero exit, `TimeoutExpired`, `FileNotFoundError`, garbage output → None; env passed inherits `os.environ` plus `NO_COLOR=1`; timeout=5; `CS_FM_PATH` override used, default `/usr/bin/fm`
-- [ ] write tests for `Cache`: put/get/delete, key normalization (case, whitespace), corrupt JSON → empty, missing dir created, env var vs fallback path
-- [ ] implement `workflow/regexgen.py` until tests pass
-- [ ] run tests - must pass before task 2
+- [x] create `tests/__init__.py` inserting `<repo>/workflow` into `sys.path`
+- [x] write tests for `PROMPT`: `"\\b" in PROMPT`, `"\x08" not in PROMPT`, contains all 4 examples
+- [x] write tests for `parse_fm_output`: plain regex, backtick-wrapped, ```` ```regex ```` fence, `request: ip -> ` prefix echo, ANSI codes, leading blank lines, `/pattern/` delimiters
+- [x] write tests for `validate`: valid IP regex OK; invalid syntax, `.*`, `a?`, `\b`, `(?=\d)`, `\S+`, `\w+`, `.`, >500 chars → None
+- [x] write tests for `generate`/`run_fm` with fake runner and patched `subprocess.run`: success; non-zero exit, `TimeoutExpired`, `FileNotFoundError`, garbage output → None; env passed inherits `os.environ` plus `NO_COLOR=1`; timeout=5; `CS_FM_PATH` override used, default `/usr/bin/fm`
+- [x] write tests for `Cache`: put/get/delete, key normalization (case, whitespace), corrupt JSON → empty, missing dir created, env var vs fallback path
+- [x] implement `workflow/regexgen.py` until tests pass
+- [x] run tests - must pass before task 2
 
 ### Task 2: Clipboard DB read + regex/text search
 

@@ -1,0 +1,136 @@
+"""Turn a natural-language query into a validated Python regex via Apple's `fm` CLI."""
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import tempfile
+from typing import Callable, Optional
+
+PROMPT = r"""You write grep -E regexes that find a KIND of data in clipboard text, not the literal words of the request. Output only the regex.
+Examples:
+request: phone number -> \+?[0-9][0-9 ()-]{7,}[0-9]
+request: hex color -> #[0-9a-fA-F]{6}\b
+request: git command -> \bgit (clone|commit|push|pull|checkout|status|log)\b
+request: date -> [0-9]{4}-[0-9]{2}-[0-9]{2}"""
+
+FM_TIMEOUT = 5
+MAX_PATTERN_LEN = 500
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+_PREFIX_RE = re.compile(r"^request:.*?->\s*")
+_CATCH_ALL_PROBE = "hello world the quick brown fox jumps over the lazy dog"
+_EMPTY_PROBE = "hello 123 a@b.c -_./:\n"
+
+
+def parse_fm_output(text: str) -> str:
+    text = _ANSI_RE.sub("", text or "")
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("```"):
+            continue
+        line = line.strip("`").strip()
+        line = _PREFIX_RE.sub("", line).strip().strip("`").strip()
+        if len(line) >= 2 and line.startswith("/") and line.endswith("/"):
+            line = line[1:-1]
+        return line
+    return ""
+
+
+def validate(pattern: str) -> Optional["re.Pattern[str]"]:
+    if not pattern or len(pattern) > MAX_PATTERN_LEN:
+        return None
+    try:
+        compiled = re.compile(pattern)
+    except (re.error, RecursionError, OverflowError):
+        return None
+    if compiled.fullmatch(""):
+        return None
+    # zero-width-only or optional-everything patterns (\b, lookaheads, a?)
+    if any(m.end() == m.start() for m in compiled.finditer(_EMPTY_PROBE)):
+        return None
+    # catch-all: matches ordinary prose
+    if any(m.group(0) for m in compiled.finditer(_CATCH_ALL_PROBE)):
+        return None
+    return compiled
+
+
+def run_fm(query: str) -> Optional[str]:
+    fm_path = os.environ.get("CS_FM_PATH", "/usr/bin/fm")
+    try:
+        proc = subprocess.run(
+            [fm_path, "respond", "--no-stream", "-g", "-i", PROMPT, f"request: {query} ->"],
+            env={**os.environ, "NO_COLOR": "1"},
+            capture_output=True,
+            text=True,
+            timeout=FM_TIMEOUT,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
+def generate(query: str, runner: Callable[[str], Optional[str]] = run_fm) -> Optional[str]:
+    raw = runner(query)
+    if raw is None:
+        return None
+    pattern = parse_fm_output(raw)
+    if validate(pattern) is None:
+        return None
+    return pattern
+
+
+def _normalize(query: str) -> str:
+    return " ".join(query.lower().split())
+
+
+class Cache:
+    """JSON file mapping normalized query -> regex."""
+
+    def __init__(self, path: Optional[str] = None) -> None:
+        if path is None:
+            base = os.environ.get("alfred_workflow_cache") or os.path.expanduser(
+                "~/Library/Caches/clipboard-semantic-search"
+            )
+            path = os.path.join(base, "regex_cache.json")
+        self.path = path
+
+    def _load(self) -> dict:
+        try:
+            with open(self.path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _save(self, data: dict) -> None:
+        directory = os.path.dirname(self.path)
+        os.makedirs(directory, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=directory, prefix=".regex_cache")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            os.replace(tmp, self.path)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
+    def get(self, query: str) -> Optional[str]:
+        value = self._load().get(_normalize(query))
+        return value if isinstance(value, str) else None
+
+    def put(self, query: str, pattern: str) -> None:
+        data = self._load()
+        data[_normalize(query)] = pattern
+        self._save(data)
+
+    def delete(self, query: str) -> None:
+        data = self._load()
+        if data.pop(_normalize(query), None) is not None:
+            self._save(data)
