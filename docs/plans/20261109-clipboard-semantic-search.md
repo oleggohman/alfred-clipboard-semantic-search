@@ -158,11 +158,11 @@ Alfred:  Enter → paste full clip | ⌘Enter → paste matched part | ⌥Enter 
 - Create: `workflow/alfred.py`
 - Create: `tests/test_alfred.py`
 
-- [ ] write tests (TZ pinned to UTC via `os.environ["TZ"]` + `time.tzset()` in setUp/tearDown): `format_date(0)` → `2001-01-01 00:00`, fractional ts, real-range ts
-- [ ] write `to_items` tests: schema fields, title single-line + truncated to 120, subtitle has marker/app/date/`+N more` (only when N>0)/preview ≤80, mods cmd/alt args, `skipknowledge` true, both modes' markers
-- [ ] write `message_item` tests: `valid:false`
-- [ ] implement `workflow/alfred.py` until tests pass
-- [ ] run tests - must pass before task 4
+- [x] write tests (TZ pinned to UTC via `os.environ["TZ"]` + `time.tzset()` in setUp/tearDown): `format_date(0)` → `2001-01-01 00:00`, fractional ts, real-range ts
+- [x] write `to_items` tests: schema fields, title single-line + truncated to 120, subtitle has marker/app/date/`+N more` (only when N>0)/preview ≤80, mods cmd/alt args, `skipknowledge` true, both modes' markers
+- [x] write `message_item` tests: `valid:false`
+- [x] implement `workflow/alfred.py` until tests pass
+- [x] run tests - must pass before task 4
 
 ### Task 4: Entry point + fallback chain
 
