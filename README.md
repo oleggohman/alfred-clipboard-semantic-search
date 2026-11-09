@@ -41,7 +41,9 @@ If you skip this step, every `fm` call fails with "YOU HAVE NOT AGREED TO THE FO
 
 ## Install
 
-Clone the repo, build the archive and open it. Alfred shows its import dialog:
+Download [ClipboardSemanticSearch.alfredworkflow](https://github.com/oleggohman/alfred-clipboard-semantic-search/releases/latest/download/ClipboardSemanticSearch.alfredworkflow) from the [latest release](https://github.com/oleggohman/alfred-clipboard-semantic-search/releases/latest) and double-click it. Alfred shows its import dialog.
+
+Or build it from source:
 
 ```
 git clone https://github.com/oleggohman/alfred-clipboard-semantic-search.git
@@ -98,3 +100,15 @@ scripts/smoke.sh "ip"                                    # real fm + real clipbo
 ```
 
 `scripts/smoke.sh` prints only the mode, hit count, elapsed time and the cached regex, never clip contents. Unit tests use a temporary SQLite file and a fake `fm`.
+
+## Releasing
+
+From an up-to-date, clean `main`:
+
+```
+scripts/release.sh 0.2.0
+```
+
+The script runs the tests, lint and a build check, sets `version` in `workflow/info.plist`, commits `chore(release): v0.2.0`, tags `v0.2.0` and pushes both. Pushing the tag starts the [Release workflow](.github/workflows/release.yml) on a macOS runner. It checks that the tag matches the plist version, runs the tests on the system Python, builds the package and attaches `ClipboardSemanticSearch.alfredworkflow` to a GitHub release with generated notes.
+
+To rebuild and re-upload the package for an existing tag, run the workflow manually: `gh workflow run release.yml -f tag=v0.1.0`.

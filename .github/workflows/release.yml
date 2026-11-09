@@ -1,0 +1,70 @@
+# Build the Alfred workflow package and publish it as a GitHub release asset.
+# Triggered by pushing a vX.Y.Z tag (scripts/release.sh does that), or manually
+# for an existing tag (re-uploads the asset if the release already exists).
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # macOS runner: tests must run on the system /usr/bin/python3 (3.9) that Alfred uses, and need plutil.
+    runs-on: macos-15
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      ASSET: dist/ClipboardSemanticSearch.alfredworkflow
+    steps:
+      - name: Validate tag
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$TAG' is not a vX.Y.Z tag"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+
+      - name: Check tag matches workflow version
+        run: |
+          version="$(plutil -extract version raw workflow/info.plist)"
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match info.plist version $version"
+            exit 1
+          fi
+
+      - name: Test
+        run: |
+          /usr/bin/python3 --version
+          /usr/bin/python3 -m unittest discover -s tests -t . -v
+
+      - name: Lint
+        run: |
+          PYTHONPYCACHEPREFIX="$RUNNER_TEMP/pyc" /usr/bin/python3 -m py_compile workflow/*.py
+          plutil -lint workflow/info.plist
+
+      - name: Build
+        run: ./build.sh dist
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            gh release create "$TAG" "$ASSET" --title "$TAG" --generate-notes --verify-tag
+          fi

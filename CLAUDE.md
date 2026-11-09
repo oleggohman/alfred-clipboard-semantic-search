@@ -7,6 +7,7 @@ Alfred 5 workflow (`cs <query>`) that searches clipboard history by kind of data
 - Tests: `/usr/bin/python3 -m unittest discover -s tests -t . -v` (py_compile does not catch 3.9 incompatibilities). Never call the real `fm` or the real Alfred DB in unit tests; inject fakes and use temp SQLite files.
 - Lint: `ruff check workflow tests` (if installed) and `/usr/bin/python3 -m py_compile workflow/*.py`; `plutil -lint workflow/info.plist`.
 - Build: `./build.sh [outdir]` (default `dist/`, git-ignored). Smoke: `scripts/smoke.sh "<query>"`.
+- Release: `scripts/release.sh X.Y.Z` on clean, synced `main` (bumps plist version, tags, pushes). The tag triggers `.github/workflows/release.yml`, which uploads the package to the GitHub release. Tag and `info.plist` version must match.
 - `fm` fails with ModelManagerError 1008 inside Claude's sandbox; run real-`fm` checks with the sandbox disabled. `CS_FM_PATH` overrides the binary.
 - Never commit clipboard contents, and never print them in logs, tests, docs or smoke output.
 - Work on a feature branch, Conventional Commits.

@@ -138,5 +138,74 @@ class BuildTests(unittest.TestCase):
         self.assertTrue(os.access(BUILD, os.X_OK))
 
 
+RELEASE = os.path.join(ROOT, "scripts", "release.sh")
+BUMP = os.path.join(ROOT, "scripts", "bump_version.py")
+RELEASE_YML = os.path.join(ROOT, ".github", "workflows", "release.yml")
+
+
+class ReleaseTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.copy = os.path.join(self.tmp, "info.plist")
+        shutil.copy(PLIST, self.copy)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def bump(self, version):
+        return subprocess.run(["/usr/bin/python3", BUMP, self.copy, version],
+                              capture_output=True, text=True)
+
+    def test_bump_changes_only_version_line(self):
+        with open(PLIST, encoding="utf-8") as f:
+            before = f.read().splitlines()
+        r = self.bump("9.8.7")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        with open(self.copy, encoding="utf-8") as f:
+            after = f.read().splitlines()
+        changed = [(a, b) for a, b in zip(before, after) if a != b]
+        self.assertEqual(len(before), len(after))
+        self.assertEqual(len(changed), 1)
+        self.assertIn("<string>9.8.7</string>", changed[0][1])
+        with open(self.copy, "rb") as f:
+            bumped = plistlib.load(f)
+        original = load_plist()
+        self.assertEqual(bumped["version"], "9.8.7")
+        bumped.pop("version")
+        original.pop("version")
+        self.assertEqual(bumped, original)
+
+    def test_bump_rejects_bad_version(self):
+        r = self.bump("1.2")
+        self.assertNotEqual(r.returncode, 0)
+        with open(PLIST, "rb") as a, open(self.copy, "rb") as b:
+            self.assertEqual(a.read(), b.read())
+
+    def test_bump_rejects_plist_without_version(self):
+        with open(self.copy, "w", encoding="utf-8") as f:
+            f.write("<plist><dict><key>name</key><string>x</string></dict></plist>")
+        self.assertNotEqual(self.bump("1.0.0").returncode, 0)
+
+    def test_release_rejects_bad_version_before_touching_git(self):
+        for arg in ([], ["abc"], ["1.2"], ["v1.2.3.4"]):
+            r = subprocess.run(["bash", RELEASE] + arg, capture_output=True, text=True, cwd=self.tmp)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("usage", r.stderr)
+
+    def test_release_scripts_executable(self):
+        self.assertTrue(os.access(RELEASE, os.X_OK))
+
+    def test_release_workflow_checks_version_and_uploads_asset(self):
+        with open(RELEASE_YML, encoding="utf-8") as f:
+            yml = f.read()
+        self.assertIn('tags: ["v*.*.*"]', yml)
+        self.assertIn("plutil -extract version raw workflow/info.plist", yml)
+        self.assertIn("/usr/bin/python3 -m unittest discover -s tests -t .", yml)
+        self.assertIn("./build.sh dist", yml)
+        self.assertIn("dist/ClipboardSemanticSearch.alfredworkflow", yml)
+        self.assertIn("gh release create", yml)
+        self.assertIn("contents: write", yml)
+
+
 if __name__ == "__main__":
     unittest.main()
