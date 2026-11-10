@@ -48,7 +48,7 @@ class PlistTests(unittest.TestCase):
         self.assertEqual(self.p["bundleid"], "com.oleggohman.clipboard-semantic-search")
         self.assertEqual(self.p["name"], "Clipboard Semantic Search")
         self.assertEqual(self.p["createdby"], "Oleg Gohman")
-        self.assertEqual(self.p["webaddress"], "")
+        self.assertEqual(self.p["webaddress"], "https://github.com/oleggohman/alfred-clipboard-semantic-search")
         self.assertEqual(self.p["variablesdontexport"], [])
         self.assertTrue(self.p["description"])
         self.assertTrue(self.p["readme"])
