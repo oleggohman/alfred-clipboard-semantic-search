@@ -101,14 +101,14 @@
 - Modify: `tests/test_cs.py`
 - Modify: `scripts/smoke.sh`
 
-- [ ] write failing tests: regex-mode subtitle has no marker and no app name (`3d ago · +2 more · <preview>`); text-mode subtitle starts with `🔤 text`
-- [ ] write failing tests: preview omitted when title starts with it (incl. single-line clip > 80 chars with empty match); kept when different
-- [ ] update `tests/test_cs.py` asserts that look for `"regex"` in the subtitle (lines ~54, ~99, ~120) to check regex mode via `not subtitle.startswith("🔤 text")`, and text mode via `startswith("🔤 text")`
-- [ ] update `scripts/smoke.sh` mode detection to `"text" if subtitle.startswith("🔤 text") else "regex"`
-- [ ] write failing tests: `icon` is `fileicon` with app path when path exists (temp dir), absent when `apppath` empty or path missing
-- [ ] write failing tests: `arg` = match (falls back to clip when match blank); `mods` has only `cmd` with `arg` = whole clip and subtitle `Copy whole clip`; `text` unchanged
-- [ ] implement in `_item` / `to_items` (pass `now` through for tests, default real time)
-- [ ] run tests - must pass before task 4
+- [x] write failing tests: regex-mode subtitle has no marker and no app name (`3d ago · +2 more · <preview>`); text-mode subtitle starts with `🔤 text`
+- [x] write failing tests: preview omitted when title starts with it (incl. single-line clip > 80 chars with empty match); kept when different
+- [x] update `tests/test_cs.py` asserts that look for `"regex"` in the subtitle (lines ~54, ~99, ~120) to check regex mode via `not subtitle.startswith("🔤 text")`, and text mode via `startswith("🔤 text")`
+- [x] update `scripts/smoke.sh` mode detection to `"text" if subtitle.startswith("🔤 text") else "regex"`
+- [x] write failing tests: `icon` is `fileicon` with app path when path exists (temp dir), absent when `apppath` empty or path missing
+- [x] write failing tests: `arg` = match (falls back to clip when match blank); `mods` has only `cmd` with `arg` = whole clip and subtitle `Copy whole clip`; `text` unchanged
+- [x] implement in `_item` / `to_items` (pass `now` through for tests, default real time)
+- [x] run tests - must pass before task 4
 
 ### Task 4: Copy-only workflow wiring
 

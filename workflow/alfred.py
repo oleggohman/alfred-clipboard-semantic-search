@@ -54,7 +54,7 @@ def _item(hit, mode: str, now: Optional[float] = None) -> dict:
         "uid": str(clip.rowid),
         "title": title,
         "subtitle": " · ".join(parts),
-        "arg": hit.match.strip() and hit.match or clip.item,
+        "arg": hit.match if hit.match.strip() else clip.item,
         "valid": True,
         "text": {"copy": clip.item, "largetype": clip.item},
         "mods": {"cmd": {"arg": clip.item, "subtitle": "Copy whole clip"}},
