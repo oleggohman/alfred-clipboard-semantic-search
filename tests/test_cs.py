@@ -47,11 +47,15 @@ class RunTests(unittest.TestCase):
     def titles(self, out):
         return [i["title"] for i in out["items"]]
 
+    def assert_regex_subtitle(self, item):
+        # fixture timestamps are from 2001, so regex rows start with a plain date, no marker
+        self.assertRegex(item["subtitle"].split(" · ")[0], r"^\d{4}-\d{2}-\d{2}$")
+
     def test_regex_path_caches_after_search(self):
         gen = FakeGen(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
         out = self.run_cs("ip", ["host 10.0.0.1 up", "nothing", "also 1.2.3.4"], gen)
         self.assertEqual(sorted(self.titles(out)), ["1.2.3.4", "10.0.0.1"])
-        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
+        self.assert_regex_subtitle(out["items"][0])
         self.assertEqual(self.cache.get("ip"), gen.result)
 
     def test_cache_hit_skips_generator(self):
@@ -96,7 +100,7 @@ class RunTests(unittest.TestCase):
 
     def test_small_corpus_not_catch_all(self):
         out = self.run_cs("n", ["a1", "b2"], FakeGen("[0-9]"))
-        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
+        self.assert_regex_subtitle(out["items"][0])
         self.assertEqual(self.cache.get("n"), "[0-9]")
 
     def _timeout(self, hits):
@@ -117,7 +121,7 @@ class RunTests(unittest.TestCase):
         with self._timeout([hit]):
             out = cs.run("foo", db_path=path, cache=self.cache, generator=FakeGen("[0-9]{3}"))
         self.assertEqual(self.titles(out), ["123"])
-        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
+        self.assert_regex_subtitle(out["items"][0])
         self.assertIsNone(self.cache.get("foo"))
 
     def test_timeout_with_hits_deletes_cached(self):
