@@ -131,10 +131,10 @@
 - [ ] smoke: `scripts/smoke.sh "ip"` (sandbox disabled for real `fm`); confirm output shape only, never print clip contents
 
 ### Task 6: [Final] Update documentation
-- [ ] README: key table (Enter copies matched value, ⌘Enter copies whole clip, ⌘L Large Type), remove ⌥Enter row
-- [ ] README: drop Accessibility prerequisite and "Enter copies but does not paste" troubleshooting; reword "Pasting and copying are marked transient" (copying only); change "Results are marked `regex` or `text`" (only text fallback is marked now); describe app icon and relative time in subtitle
-- [ ] update CLAUDE.md if new patterns discovered
-- [ ] move this plan to `docs/plans/completed/`
+- [x] README: key table (Enter copies matched value, ⌘Enter copies whole clip, ⌘L Large Type), remove ⌥Enter row
+- [x] README: drop Accessibility prerequisite and "Enter copies but does not paste" troubleshooting; reword "Pasting and copying are marked transient" (copying only); change "Results are marked `regex` or `text`" (only text fallback is marked now); describe app icon and relative time in subtitle
+- [x] update CLAUDE.md if new patterns discovered
+- [x] move this plan to `docs/plans/completed/` (done by orchestrator)
 
 ## Post-Completion
 *Items requiring manual intervention or external systems - no checkboxes, informational only*
