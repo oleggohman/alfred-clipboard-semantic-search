@@ -26,6 +26,7 @@ class IconTests(unittest.TestCase):
         with open(ICON, "rb") as f:
             head = f.read(24)
         self.assertEqual(head[:8], b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(head[12:16], b"IHDR")
         width = int.from_bytes(head[16:20], "big")
         height = int.from_bytes(head[20:24], "big")
         self.assertEqual(width, height)
