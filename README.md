@@ -59,7 +59,7 @@ Type `cs <kind of data>` in Alfred, for example `cs ip`.
 
 | Key | Action |
 | --- | --- |
-| Enter | Copy the matched value (the IP, the email, ...) to the clipboard |
+| Enter | Copy the matched value (the IP, the email, ...) to the clipboard; in the plain-text fallback, copy the whole clip |
 | ⌘Enter | Copy the whole clip to the clipboard |
 | ⌘L | Show the whole clip in Large Type |
 

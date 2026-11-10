@@ -1,6 +1,7 @@
 """Format search results as Alfred Script Filter JSON."""
 from __future__ import annotations
 
+import math
 import os
 import re
 import time
@@ -16,6 +17,8 @@ def format_age(ts, now: Optional[float] = None) -> str:
     """Cocoa-epoch seconds -> 'just now' / '5m ago' / '2h ago' / '3d ago' / 'YYYY-MM-DD'; '' if invalid."""
     try:
         unix = float(ts) + COCOA_EPOCH
+        if not math.isfinite(unix):
+            return ""
         current = time.time() if now is None else now
         delta = current - unix
         if delta < 60:
@@ -54,12 +57,13 @@ def _item(hit, mode: str, now: Optional[float] = None) -> dict:
         "uid": str(clip.rowid),
         "title": title,
         "subtitle": " · ".join(parts),
-        "arg": hit.match if hit.match.strip() else clip.item,
+        # text fallback matches are a guessed line, so Enter copies the whole clip there
+        "arg": clip.item if mode == "text" else (hit.match.strip() or clip.item),
         "valid": True,
         "text": {"copy": clip.item, "largetype": clip.item},
         "mods": {"cmd": {"arg": clip.item, "subtitle": "Copy whole clip"}},
     }
-    if clip.apppath and os.path.exists(clip.apppath):
+    if isinstance(clip.apppath, str) and clip.apppath and os.path.exists(clip.apppath):
         item["icon"] = {"type": "fileicon", "path": clip.apppath}
     return item
 

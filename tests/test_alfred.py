@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import time
@@ -40,8 +41,18 @@ class FormatAgeTests(unittest.TestCase):
         expected = time.strftime("%Y-%m-%d", time.localtime(NOW - 7 * 86400))
         self.assertEqual(self.age(7 * 86400), expected)
 
+    def test_bucket_boundaries(self):
+        cases = [(59, "just now"), (60, "1m ago"), (3599, "59m ago"), (3600, "1h ago"),
+                 (86399, "23h ago"), (86400, "1d ago")]
+        for delta, expected in cases:
+            self.assertEqual(self.age(delta), expected, delta)
+
     def test_invalid_ts(self):
         for ts in (None, "junk"):
+            self.assertEqual(alfred.format_age(ts, now=NOW), "")
+
+    def test_non_finite_ts(self):
+        for ts in (float("inf"), float("-inf"), float("nan")):
             self.assertEqual(alfred.format_age(ts, now=NOW), "")
 
     def test_default_now(self):
@@ -79,8 +90,19 @@ class ToItemsTests(unittest.TestCase):
         self.assertEqual(item["mods"], {"cmd": {"arg": "host 10.0.0.1 up", "subtitle": "Copy whole clip"}})
 
     def test_arg_falls_back_to_clip_when_match_blank(self):
-        item = alfred.to_items([make_hit(item="whole clip", match="  ")], "text")["items"][0]
+        item = alfred.to_items([make_hit(item="whole clip", match="  ")], "regex")["items"][0]
         self.assertEqual(item["arg"], "whole clip")
+
+    def test_arg_strips_match(self):
+        item = alfred.to_items([make_hit(match=" 10.0.0.1\n")], "regex")["items"][0]
+        self.assertEqual(item["arg"], "10.0.0.1")
+
+    def test_text_mode_arg_is_whole_clip(self):
+        item = alfred.to_items([make_hit(item="line one\nhost 10.0.0.1 up", match="host 10.0.0.1 up")], "text")[
+            "items"
+        ][0]
+        self.assertEqual(item["arg"], "line one\nhost 10.0.0.1 up")
+        self.assertEqual(item["title"], "host 10.0.0.1 up")
 
     def test_icon_when_app_path_exists(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -91,6 +113,13 @@ class ToItemsTests(unittest.TestCase):
         for path in ("", os.path.join(tempfile.gettempdir(), "no-such-app-xyz.app")):
             item = alfred.to_items([make_hit(apppath=path)], "regex")["items"][0]
             self.assertNotIn("icon", item)
+
+    def test_no_icon_when_app_path_not_str(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for path in (tmp.encode(), 2):
+                out = alfred.to_items([make_hit(apppath=path)], "regex")
+                self.assertNotIn("icon", out["items"][0])
+                json.dumps(out)
 
     def test_title_single_line_and_truncated(self):
         long = "a" * 300

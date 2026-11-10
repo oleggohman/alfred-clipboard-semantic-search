@@ -53,7 +53,7 @@
   - `subtitle` parts joined with ` · `: `🔤 text` (text mode only), age (if non-empty), `+N more` (if extra > 0), preview (`_oneline(clip.item, PREVIEW_MAX)`, omitted when `title.startswith(preview)` — titles and previews have different caps, so plain equality misses long one-line clips)
   - signature: `to_items(hits, mode, now=None)` passes `now` to `_item`; `cs.py` callers unchanged
   - `icon`: `{"type": "fileicon", "path": clip.apppath}` only when `clip.apppath` is non-empty and `os.path.exists` is true; otherwise no `icon` key (Alfred uses workflow icon)
-  - `arg`: `hit.match or clip.item` (Enter copies what the title shows)
+  - `arg`: regex mode `hit.match.strip() or clip.item` (Enter copies what the title shows); text fallback mode `clip.item` (the matched line is only a guess, so Enter copies the whole clip)
   - `mods`: `{"cmd": {"arg": clip.item, "subtitle": "Copy whole clip"}}`; no `alt`
   - `text` (⌘C / ⌘L) unchanged: whole clip
 - `info.plist`:
