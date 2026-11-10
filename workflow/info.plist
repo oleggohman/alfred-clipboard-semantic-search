@@ -20,7 +20,7 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>8B0D0031-FCE0-4ADC-AB86-C4E829376D65</string>
+				<string>DB2B8D9D-255C-4294-B963-A472AA8B07AC</string>
 				<key>modifiers</key>
 				<integer>1048576</integer>
 				<key>modifiersubtext</key>
@@ -106,6 +106,25 @@
 			<key>version</key>
 			<integer>3</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<true/>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>DB2B8D9D-255C-4294-B963-A472AA8B07AC</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string>Type "cs &lt;kind of data&gt;" (e.g. cs ip, cs email) to search clipboard history.
@@ -126,6 +145,13 @@ Uses Apple's on-device model via /usr/bin/fm; falls back to plain text search.</
 			<integer>350</integer>
 			<key>ypos</key>
 			<integer>240</integer>
+		</dict>
+		<key>DB2B8D9D-255C-4294-B963-A472AA8B07AC</key>
+		<dict>
+			<key>xpos</key>
+			<integer>350</integer>
+			<key>ypos</key>
+			<integer>60</integer>
 		</dict>
 	</dict>
 	<key>variablesdontexport</key>

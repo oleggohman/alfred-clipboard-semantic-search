@@ -40,7 +40,7 @@ class PlistTests(unittest.TestCase):
         self.assertTrue(self.p["readme"])
 
     def test_objects_have_uid_type_version_config(self):
-        self.assertEqual(len(self.p["objects"]), 2)
+        self.assertEqual(len(self.p["objects"]), 3)
         self.assertEqual(set(self.p["uidata"]), set(self.objs))
         for o in self.p["objects"]:
             for k in ("uid", "type", "version", "config"):
@@ -73,26 +73,29 @@ class PlistTests(unittest.TestCase):
 
     def test_clipboard_outputs(self):
         outs = self.by_type("alfred.workflow.output.clipboard")
-        self.assertEqual(len(outs), 1)
-        o = outs[0]
-        self.assertEqual(o["version"], 3)
-        self.assertIs(o["config"]["autopaste"], False)
-        self.assertEqual(o["config"]["clipboardtext"], "{query}")
-        # clip text must be copied verbatim, and not re-recorded in history
-        self.assertIs(o["config"]["ignoredynamicplaceholders"], True)
-        self.assertIs(o["config"]["transient"], True)
+        self.assertEqual(len(outs), 2)
+        for o in outs:
+            self.assertEqual(o["version"], 3)
+            self.assertIs(o["config"]["autopaste"], False)
+            self.assertEqual(o["config"]["clipboardtext"], "{query}")
+            # clip text must be copied verbatim, and not re-recorded in history
+            self.assertIs(o["config"]["ignoredynamicplaceholders"], True)
+            self.assertIs(o["config"]["transient"], True)
 
     def test_connections(self):
         sf = self.by_type("alfred.workflow.input.scriptfilter")[0]
-        out = self.by_type("alfred.workflow.output.clipboard")[0]
+        outs = {o["uid"] for o in self.by_type("alfred.workflow.output.clipboard")}
         conns = self.p["connections"][sf["uid"]]
         self.assertEqual(len(conns), 2)
         for c in conns:
             self.assertIs(c["vitoclose"], False)
             self.assertIn("modifiersubtext", c)
-            self.assertEqual(c["destinationuid"], out["uid"])
+            self.assertIn(c["destinationuid"], outs)
         got = {c["modifiers"]: c for c in conns}
         self.assertEqual(set(got), {0, 1048576})
+        # each key gets its own clipboard node (one link per object pair)
+        self.assertNotEqual(got[0]["destinationuid"], got[1048576]["destinationuid"])
+        self.assertEqual({c["destinationuid"] for c in conns}, outs)
         self.assertEqual(got[1048576]["modifiersubtext"], "Copy whole clip")
 
     def test_readme_has_no_paste(self):
