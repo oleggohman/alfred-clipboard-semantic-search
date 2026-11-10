@@ -1,11 +1,20 @@
-// Renders workflow/icon.png: clipboard + LLM sparkles. Usage: swift scripts/make_icon.swift workflow/icon.png [size]
+// Renders workflow/icon.png: clipboard + LLM sparkles. Usage: swift scripts/make_icon.swift <out.png> [size]
 import AppKit
 import CoreGraphics
 
 let args = CommandLine.arguments
-let outPath = args.count > 1 ? args[1] : "icon.png"
-let S = CGFloat(args.count > 2 ? Double(args[2])! : 512)
-let px = Int(S)
+func usage() -> Never {
+    FileHandle.standardError.write("usage: swift scripts/make_icon.swift <out.png> [size]\n".data(using: .utf8)!)
+    exit(2)
+}
+guard args.count >= 2, args.count <= 3, !args[1].isEmpty else { usage() }
+let outPath = args[1]
+var px = 512
+if args.count == 3 {
+    guard let n = Int(args[2]), n > 0 else { usage() }
+    px = n
+}
+let S = CGFloat(px)
 
 let cs = CGColorSpaceCreateDeviceRGB()
 guard let ctx = CGContext(data: nil, width: px, height: px, bitsPerComponent: 8, bytesPerRow: 0,
@@ -29,7 +38,8 @@ ctx.restoreGState()
 // Clipboard board with soft shadow.
 let board = CGRect(x: 120, y: 72, width: 272, height: 340)
 ctx.saveGState()
-ctx.setShadow(offset: CGSize(width: 0, height: -10), blur: 24, color: rgb(20, 10, 60, 0.45))
+// Shadow offset and blur are in device pixels (the CTM does not apply), so scale them by hand.
+ctx.setShadow(offset: CGSize(width: 0, height: -10 * S / 512), blur: 24 * S / 512, color: rgb(20, 10, 60, 0.45))
 ctx.addPath(CGPath(roundedRect: board, cornerWidth: 34, cornerHeight: 34, transform: nil))
 ctx.setFillColor(rgb(255, 255, 255)); ctx.fillPath()
 ctx.restoreGState()
