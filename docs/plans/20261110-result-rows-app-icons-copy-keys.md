@@ -88,10 +88,10 @@
 - Modify: `workflow/alfred.py`
 - Modify: `tests/test_alfred.py`
 
-- [ ] write failing tests for `format_age` with fixed `now`: 30s → `just now`, future ts → `just now`, 5 min → `5m ago`, 2h → `2h ago`, 3d → `3d ago`, exactly 7d → date (expected value computed in the test with `time.strftime("%Y-%m-%d", time.localtime(...))` so it is timezone-safe), invalid ts → `""`
-- [ ] implement `format_age(ts, now=None)`
-- [ ] remove `format_date` and `_safe_date` (replaced by `format_age`), their tests in `tests/test_alfred.py`, and the now-unused `datetime`, `timezone`, `Optional` imports (ruff F401)
-- [ ] run tests - must pass before task 3
+- [x] write failing tests for `format_age` with fixed `now`: 30s → `just now`, future ts → `just now`, 5 min → `5m ago`, 2h → `2h ago`, 3d → `3d ago`, exactly 7d → date (expected value computed in the test with `time.strftime("%Y-%m-%d", time.localtime(...))` so it is timezone-safe), invalid ts → `""`
+- [x] implement `format_age(ts, now=None)`
+- [x] remove `format_date` and `_safe_date` (replaced by `format_age`), their tests in `tests/test_alfred.py`, and the now-unused `datetime`, `timezone`, `Optional` imports (ruff F401)
+- [x] run tests - must pass before task 3
 
 ### Task 3: New item layout, icon and copy keys
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 import time
-from datetime import datetime, timezone
 from typing import List, Optional
 
 COCOA_EPOCH = 978307200
@@ -12,17 +11,21 @@ PREVIEW_MAX = 80
 MARKERS = {"regex": "🧠 regex", "text": "🔤 text"}
 
 
-def format_date(ts: float, tz: Optional[timezone] = None) -> str:
-    """Cocoa-epoch seconds -> 'YYYY-MM-DD HH:MM' in local time (or tz)."""
-    unix = float(ts) + COCOA_EPOCH
-    if tz is None:
-        return time.strftime("%Y-%m-%d %H:%M", time.localtime(unix))
-    return datetime.fromtimestamp(unix, tz).strftime("%Y-%m-%d %H:%M")
-
-
-def _safe_date(ts) -> str:
+def format_age(ts, now: Optional[float] = None) -> str:
+    """Cocoa-epoch seconds -> 'just now' / '5m ago' / '2h ago' / '3d ago' / 'YYYY-MM-DD'; '' if invalid."""
     try:
-        return format_date(ts)
+        unix = float(ts) + COCOA_EPOCH
+        current = time.time() if now is None else now
+        delta = current - unix
+        if delta < 60:
+            return "just now"
+        if delta < 3600:
+            return f"{int(delta // 60)}m ago"
+        if delta < 86400:
+            return f"{int(delta // 3600)}h ago"
+        if delta < 7 * 86400:
+            return f"{int(delta // 86400)}d ago"
+        return time.strftime("%Y-%m-%d", time.localtime(unix))
     except (TypeError, ValueError, OverflowError, OSError):
         return ""
 
@@ -31,12 +34,12 @@ def _oneline(text: str, limit: int) -> str:
     return re.sub(r"\s+", " ", text).strip()[:limit]
 
 
-def _item(hit, mode: str) -> dict:
+def _item(hit, mode: str, now: Optional[float] = None) -> dict:
     clip = hit.clip
     parts = [MARKERS.get(mode, mode)]
     if clip.app:
         parts.append(clip.app)
-    date = _safe_date(clip.ts)
+    date = format_age(clip.ts, now)
     if date:
         parts.append(date)
     if hit.extra > 0:
@@ -56,8 +59,8 @@ def _item(hit, mode: str) -> dict:
     }
 
 
-def to_items(hits: List, mode: str) -> dict:
-    return {"skipknowledge": True, "items": [_item(h, mode) for h in hits]}
+def to_items(hits: List, mode: str, now: Optional[float] = None) -> dict:
+    return {"skipknowledge": True, "items": [_item(h, mode, now) for h in hits]}
 
 
 def message_item(title: str, subtitle: str = "") -> dict:

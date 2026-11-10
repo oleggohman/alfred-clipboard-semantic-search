@@ -12,36 +12,39 @@ def make_hit(item="host 10.0.0.1 up", match="10.0.0.1", extra=0, app="Slack", ts
     return Hit(Clip(rowid, item, ts, app, apppath), match, extra)
 
 
-class FormatDateTests(unittest.TestCase):
-    def setUp(self):
-        self._tz = os.environ.get("TZ")
-        os.environ["TZ"] = "UTC"
-        time.tzset()
-
-    def tearDown(self):
-        if self._tz is None:
-            os.environ.pop("TZ", None)
-        else:
-            os.environ["TZ"] = self._tz
-        time.tzset()
-
-    def test_cocoa_epoch(self):
-        self.assertEqual(alfred.format_date(0), "2001-01-01 00:00")
-
-    def test_fractional_ts(self):
-        self.assertEqual(alfred.format_date(60.9), "2001-01-01 00:01")
-
-    def test_real_range_ts(self):
-        # 2026-11-08 14:02:00 UTC = 1794146520 unix
-        self.assertEqual(alfred.format_date(1794146520 - 978307200), "2026-11-08 14:02")
-
-    def test_explicit_tz_offset(self):
-        self.assertEqual(alfred.format_date(0, tz=timezone_plus(2)), "2001-01-01 02:00")
+NOW = 1794146520.0  # unix seconds
+NOW_COCOA = NOW - alfred.COCOA_EPOCH
 
 
-def timezone_plus(hours):
-    from datetime import timedelta, timezone
-    return timezone(timedelta(hours=hours))
+class FormatAgeTests(unittest.TestCase):
+    def age(self, delta):
+        return alfred.format_age(NOW_COCOA - delta, now=NOW)
+
+    def test_recent_is_just_now(self):
+        self.assertEqual(self.age(30), "just now")
+
+    def test_future_is_just_now(self):
+        self.assertEqual(self.age(-500), "just now")
+
+    def test_minutes(self):
+        self.assertEqual(self.age(5 * 60), "5m ago")
+
+    def test_hours(self):
+        self.assertEqual(self.age(2 * 3600), "2h ago")
+
+    def test_days(self):
+        self.assertEqual(self.age(3 * 86400), "3d ago")
+
+    def test_seven_days_is_date(self):
+        expected = time.strftime("%Y-%m-%d", time.localtime(NOW - 7 * 86400))
+        self.assertEqual(self.age(7 * 86400), expected)
+
+    def test_invalid_ts(self):
+        for ts in (None, "junk"):
+            self.assertEqual(alfred.format_age(ts, now=NOW), "")
+
+    def test_default_now(self):
+        self.assertEqual(alfred.format_age(time.time() - alfred.COCOA_EPOCH), "just now")
 
 
 class ToItemsTests(unittest.TestCase):
@@ -89,8 +92,8 @@ class ToItemsTests(unittest.TestCase):
         self.assertEqual(item["title"], "whole clip")
 
     def test_subtitle_parts(self):
-        sub = alfred.to_items([make_hit(extra=2)], "regex")["items"][0]["subtitle"]
-        self.assertEqual(sub, "🧠 regex · Slack · 2001-01-01 00:00 · +2 more · host 10.0.0.1 up")
+        sub = alfred.to_items([make_hit(extra=2, ts=NOW_COCOA - 300)], "regex", now=NOW)["items"][0]["subtitle"]
+        self.assertEqual(sub, "🧠 regex · Slack · 5m ago · +2 more · host 10.0.0.1 up")
 
     def test_subtitle_no_more_when_zero(self):
         sub = alfred.to_items([make_hit(extra=0)], "regex")["items"][0]["subtitle"]
@@ -101,12 +104,12 @@ class ToItemsTests(unittest.TestCase):
         self.assertTrue(sub.startswith("🔤 text"))
 
     def test_subtitle_empty_app_omitted(self):
-        sub = alfred.to_items([make_hit(app="")], "regex")["items"][0]["subtitle"]
-        self.assertEqual(sub, "🧠 regex · 2001-01-01 00:00 · host 10.0.0.1 up")
+        sub = alfred.to_items([make_hit(app="", ts=NOW_COCOA - 300)], "regex", now=NOW)["items"][0]["subtitle"]
+        self.assertEqual(sub, "🧠 regex · 5m ago · host 10.0.0.1 up")
 
     def test_null_or_bad_ts_does_not_raise(self):
         for ts in (None, "junk"):
-            sub = alfred.to_items([make_hit(ts=ts)], "regex")["items"][0]["subtitle"]
+            sub = alfred.to_items([make_hit(ts=ts)], "regex", now=NOW)["items"][0]["subtitle"]
             self.assertEqual(sub, "🧠 regex · Slack · host 10.0.0.1 up")
 
     def test_cmd_arg_falls_back_to_full_clip_when_match_empty(self):
