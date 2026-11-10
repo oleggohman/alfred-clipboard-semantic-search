@@ -116,12 +116,12 @@
 - Modify: `workflow/info.plist`
 - Modify: `tests/test_package.py`
 
-- [ ] write failing tests: exactly one clipboard output, `autopaste` false, transient, verbatim; connections are exactly modifiers `{0, 1048576}`, both to that output; ⌘ `modifiersubtext` is `Copy whole clip`
-- [ ] update `test_objects_have_uid_type_version_config` object count 3 → 2; add `set(uidata) == set(object uids)` check
-- [ ] add test: plist `readme` does not contain "paste" (case-insensitive)
-- [ ] edit `info.plist`: drop `96B02F36…` from `objects` and `uidata`, rewire Enter and ⌘ to `8B0D0031…`, drop ⌥, rewrite `readme`
-- [ ] `plutil -lint workflow/info.plist`
-- [ ] run tests - must pass before task 5
+- [x] write failing tests: exactly one clipboard output, `autopaste` false, transient, verbatim; connections are exactly modifiers `{0, 1048576}`, both to that output; ⌘ `modifiersubtext` is `Copy whole clip`
+- [x] update `test_objects_have_uid_type_version_config` object count 3 → 2; add `set(uidata) == set(object uids)` check
+- [x] add test: plist `readme` does not contain "paste" (case-insensitive)
+- [x] edit `info.plist`: drop `96B02F36…` from `objects` and `uidata`, rewire Enter and ⌘ to `8B0D0031…`, drop ⌥, rewrite `readme`
+- [x] `plutil -lint workflow/info.plist`
+- [x] run tests - must pass before task 5
 
 ### Task 5: Verify acceptance criteria
 - [ ] verify all requirements from Overview are implemented

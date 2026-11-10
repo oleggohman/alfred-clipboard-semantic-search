@@ -10,7 +10,7 @@
 		<array>
 			<dict>
 				<key>destinationuid</key>
-				<string>96B02F36-E7A4-4CBB-8793-01BC00155324</string>
+				<string>8B0D0031-FCE0-4ADC-AB86-C4E829376D65</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -20,21 +20,11 @@
 			</dict>
 			<dict>
 				<key>destinationuid</key>
-				<string>96B02F36-E7A4-4CBB-8793-01BC00155324</string>
+				<string>8B0D0031-FCE0-4ADC-AB86-C4E829376D65</string>
 				<key>modifiers</key>
 				<integer>1048576</integer>
 				<key>modifiersubtext</key>
-				<string>Paste matched part only</string>
-				<key>vitoclose</key>
-				<false/>
-			</dict>
-			<dict>
-				<key>destinationuid</key>
-				<string>8B0D0031-FCE0-4ADC-AB86-C4E829376D65</string>
-				<key>modifiers</key>
-				<integer>524288</integer>
-				<key>modifiersubtext</key>
-				<string>Copy full clip (no paste)</string>
+				<string>Copy whole clip</string>
 				<key>vitoclose</key>
 				<false/>
 			</dict>
@@ -101,25 +91,6 @@
 			<key>config</key>
 			<dict>
 				<key>autopaste</key>
-				<true/>
-				<key>clipboardtext</key>
-				<string>{query}</string>
-				<key>ignoredynamicplaceholders</key>
-				<true/>
-				<key>transient</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.output.clipboard</string>
-			<key>uid</key>
-			<string>96B02F36-E7A4-4CBB-8793-01BC00155324</string>
-			<key>version</key>
-			<integer>3</integer>
-		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>autopaste</key>
 				<false/>
 				<key>clipboardtext</key>
 				<string>{query}</string>
@@ -138,7 +109,7 @@
 	</array>
 	<key>readme</key>
 	<string>Type "cs &lt;kind of data&gt;" (e.g. cs ip, cs email) to search clipboard history.
-Enter: paste full clip. Cmd+Enter: paste matched part only. Opt+Enter: copy full clip without pasting. Cmd+L: large type.
+Enter: copy matched value. Cmd+Enter: copy whole clip. Cmd+L: large type.
 Uses Apple's on-device model via /usr/bin/fm; falls back to plain text search.</string>
 	<key>uidata</key>
 	<dict>
@@ -148,13 +119,6 @@ Uses Apple's on-device model via /usr/bin/fm; falls back to plain text search.</
 			<integer>50</integer>
 			<key>ypos</key>
 			<integer>150</integer>
-		</dict>
-		<key>96B02F36-E7A4-4CBB-8793-01BC00155324</key>
-		<dict>
-			<key>xpos</key>
-			<integer>350</integer>
-			<key>ypos</key>
-			<integer>60</integer>
 		</dict>
 		<key>8B0D0031-FCE0-4ADC-AB86-C4E829376D65</key>
 		<dict>
