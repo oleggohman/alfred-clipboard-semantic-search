@@ -102,6 +102,7 @@ ruff check workflow tests                                # if ruff is installed
 plutil -lint workflow/info.plist
 ./build.sh [outdir]                                      # builds dist/ClipboardSemanticSearch.alfredworkflow
 scripts/smoke.sh "ip"                                    # real fm + real clipboard DB
+swift scripts/make_icon.swift workflow/icon.png 512      # regenerate the workflow icon
 ```
 
 `scripts/smoke.sh` prints only the mode, hit count, elapsed time and the cached regex, never clip contents. Unit tests use a temporary SQLite file and a fake `fm`.
