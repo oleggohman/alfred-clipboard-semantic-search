@@ -80,7 +80,7 @@ Example queries, measured on a real history of about 1,300 text clips:
 | `cs url` | regex | 100 clips (result cap) | 0.6 s |
 | `cs docker` (with `fm` unavailable) | text | 26 clips | 0.09 s |
 
-A clip with several matches shows the first one, with `+N more` in the subtitle. Copying is marked transient, so they are not added to Alfred's clipboard history again. Clip text is copied verbatim (dynamic placeholders such as `{date}` are not expanded).
+A clip with several matches shows the first one, with `+N more` in the subtitle. Copying is marked transient, so it is not added to Alfred's clipboard history again. Clip text is copied verbatim (dynamic placeholders such as `{date}` are not expanded).
 
 ## Privacy
 
