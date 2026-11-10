@@ -8,8 +8,8 @@ import alfred
 from clipdb import Clip, Hit
 
 
-def make_hit(item="host 10.0.0.1 up", match="10.0.0.1", extra=0, app="Slack", ts=0.0, rowid=7):
-    return Hit(Clip(rowid, item, ts, app), match, extra)
+def make_hit(item="host 10.0.0.1 up", match="10.0.0.1", extra=0, app="Slack", ts=0.0, rowid=7, apppath=""):
+    return Hit(Clip(rowid, item, ts, app, apppath), match, extra)
 
 
 class FormatDateTests(unittest.TestCase):

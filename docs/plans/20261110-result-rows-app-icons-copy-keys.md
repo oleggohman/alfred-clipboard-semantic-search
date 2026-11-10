@@ -76,11 +76,11 @@
 - Modify: `tests/test_clipdb.py`
 - Modify: `tests/test_alfred.py`
 
-- [ ] extend `tests/test_clipdb.py::make_db` to accept an optional 5th tuple element `apppath` (default `""`, `None` allowed) so existing 4-tuple callers (incl. `test_cs.py`) keep working
-- [ ] write failing test: `load_clips` on a temp SQLite DB returns `apppath` for each clip, and `""` when the column is NULL
-- [ ] add `apppath` to `Clip` and to the `SELECT` in `load_clips` (`workflow/clipdb.py:46`)
-- [ ] update `Clip(...)` call sites: `tests/test_clipdb.py` `clips()`, `tests/test_alfred.py` `make_hit` (add `apppath` kwarg, default `""`)
-- [ ] run tests - must pass before task 2
+- [x] extend `tests/test_clipdb.py::make_db` to accept an optional 5th tuple element `apppath` (default `""`, `None` allowed) so existing 4-tuple callers (incl. `test_cs.py`) keep working
+- [x] write failing test: `load_clips` on a temp SQLite DB returns `apppath` for each clip, and `""` when the column is NULL
+- [x] add `apppath` to `Clip` and to the `SELECT` in `load_clips` (`workflow/clipdb.py:46`)
+- [x] update `Clip(...)` call sites: `tests/test_clipdb.py` `clips()`, `tests/test_alfred.py` `make_hit` (add `apppath` kwarg, default `""`)
+- [x] run tests - must pass before task 2
 
 ### Task 2: Relative age formatting
 

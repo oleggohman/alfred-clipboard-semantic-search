@@ -18,15 +18,17 @@ SCHEMA = (
 
 
 def make_db(rows):
-    """rows: (item, ts, app, dataType) tuples; item may be a SQL expression marker."""
+    """rows: (item, ts, app, dataType[, apppath]) tuples; item may be a SQL expression marker."""
     fd, path = tempfile.mkstemp(suffix=".alfdb")
     os.close(fd)
     conn = sqlite3.connect(path)
     conn.execute(SCHEMA)
-    for item, ts, app, dtype in rows:
+    for row in rows:
+        item, ts, app, dtype = row[:4]
+        apppath = row[4] if len(row) > 4 else ""
         conn.execute(
             "INSERT INTO clipboard (item, ts, app, apppath, dataType, dataHash) VALUES (?,?,?,?,?,?)",
-            (item, ts, app, "", dtype, "h"),
+            (item, ts, app, apppath, dtype, "h"),
         )
     conn.commit()
     conn.close()
@@ -34,7 +36,7 @@ def make_db(rows):
 
 
 def clips(*items):
-    return [Clip(i + 1, t, float(100 - i), "App") for i, t in enumerate(items)]
+    return [Clip(i + 1, t, float(100 - i), "App", "") for i, t in enumerate(items)]
 
 
 class LoadClipsTests(unittest.TestCase):
@@ -53,6 +55,11 @@ class LoadClipsTests(unittest.TestCase):
         self.assertEqual([c.item for c in got], ["new", "old"])
         self.assertEqual(got[0].app, "B")
         self.assertEqual(got[0].ts, 9)
+
+    def test_apppath_loaded_null_becomes_empty(self):
+        path = self.db([("a", 2, "A", 0, "/Applications/A.app"), ("b", 1, "B", 0, None)])
+        got = clipdb.load_clips(path)
+        self.assertEqual([c.apppath for c in got], ["/Applications/A.app", ""])
 
     def test_null_item_skipped_null_app_empty(self):
         path = self.db([(None, 2, "A", 0), ("x", 1, None, 0)])

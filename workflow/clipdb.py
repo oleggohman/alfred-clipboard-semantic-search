@@ -12,7 +12,7 @@ MAX_EXTRA = 99
 DEFAULT_LIMIT = 100
 DEFAULT_BUDGET = 2.0
 
-Clip = namedtuple("Clip", "rowid item ts app")
+Clip = namedtuple("Clip", "rowid item ts app apppath")
 Hit = namedtuple("Hit", "clip match extra")
 SearchResult = namedtuple("SearchResult", "hits scanned matched_total timed_out")
 
@@ -36,14 +36,14 @@ def load_clips(db_path: str) -> List[Clip]:
         conn = _connect(db_path)
         try:
             rows = conn.execute(
-                "SELECT rowid, item, ts, app FROM clipboard "
+                "SELECT rowid, item, ts, app, apppath FROM clipboard "
                 "WHERE dataType=0 AND item IS NOT NULL ORDER BY ts DESC"
             ).fetchall()
         finally:
             conn.close()
     except sqlite3.Error as exc:
         raise ClipDBError(f"Cannot read clipboard database: {exc}") from exc
-    return [Clip(r[0], r[1], r[2], r[3] or "") for r in rows]
+    return [Clip(r[0], r[1], r[2], r[3] or "", r[4] or "") for r in rows]
 
 
 def _on_alarm(signum, frame):
