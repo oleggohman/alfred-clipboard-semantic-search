@@ -18,6 +18,20 @@ def load_plist():
         return plistlib.load(f)
 
 
+ICON = os.path.join(ROOT, "workflow", "icon.png")
+
+
+class IconTests(unittest.TestCase):
+    def test_icon_is_square_png(self):
+        with open(ICON, "rb") as f:
+            head = f.read(24)
+        self.assertEqual(head[:8], b"\x89PNG\r\n\x1a\n")
+        width = int.from_bytes(head[16:20], "big")
+        height = int.from_bytes(head[20:24], "big")
+        self.assertEqual(width, height)
+        self.assertGreaterEqual(width, 256)
+
+
 class PlistTests(unittest.TestCase):
     def setUp(self):
         self.p = load_plist()
@@ -133,7 +147,7 @@ class BuildTests(unittest.TestCase):
         path = os.path.join(self.out, "ClipboardSemanticSearch.alfredworkflow")
         self.assertTrue(os.path.isfile(path))
         names = zipfile.ZipFile(path).namelist()
-        for n in ("info.plist", "cs.py", "regexgen.py", "clipdb.py", "alfred.py"):
+        for n in ("info.plist", "icon.png", "cs.py", "regexgen.py", "clipdb.py", "alfred.py"):
             self.assertIn(n, names)
         for n in names:
             self.assertNotIn("__pycache__", n)
