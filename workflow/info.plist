@@ -157,7 +157,7 @@ Uses Apple's on-device model via /usr/bin/fm; falls back to plain text search.</
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>0.2.0</string>
+	<string>0.2.1</string>
 	<key>webaddress</key>
 	<string>https://github.com/oleggohman/alfred-clipboard-semantic-search</string>
 </dict>
