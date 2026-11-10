@@ -51,7 +51,7 @@ class RunTests(unittest.TestCase):
         gen = FakeGen(r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+")
         out = self.run_cs("ip", ["host 10.0.0.1 up", "nothing", "also 1.2.3.4"], gen)
         self.assertEqual(sorted(self.titles(out)), ["1.2.3.4", "10.0.0.1"])
-        self.assertIn("regex", out["items"][0]["subtitle"])
+        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertEqual(self.cache.get("ip"), gen.result)
 
     def test_cache_hit_skips_generator(self):
@@ -64,28 +64,28 @@ class RunTests(unittest.TestCase):
     def test_generator_none_text_mode(self):
         out = self.run_cs("hello", ["say hello", "bye"], FakeGen(None))
         self.assertEqual(len(out["items"]), 1)
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
 
     def test_invalid_regex_text_mode_not_cached(self):
         out = self.run_cs("foo", ["foo bar"], FakeGen("(unclosed"))
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("foo"))
 
     def test_zero_hits_text_mode_not_cached(self):
         out = self.run_cs("foo", ["foo bar"], FakeGen("[0-9]{9}"))
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("foo"))
 
     def test_cached_regex_zero_hits_deleted(self):
         self.cache.put("foo", "[0-9]{9}")
         out = self.run_cs("foo", ["foo bar"], FakeGen(None))
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("foo"))
 
     def test_catch_all_text_mode_not_cached(self):
         texts = ["x%d widget" % i for i in range(25)]
         out = self.run_cs("widget", texts, FakeGen("x[0-9]+"))
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("widget"))
 
     def test_cached_catch_all_deleted(self):
@@ -96,7 +96,7 @@ class RunTests(unittest.TestCase):
 
     def test_small_corpus_not_catch_all(self):
         out = self.run_cs("n", ["a1", "b2"], FakeGen("[0-9]"))
-        self.assertIn("regex", out["items"][0]["subtitle"])
+        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertEqual(self.cache.get("n"), "[0-9]")
 
     def _timeout(self, hits):
@@ -107,7 +107,7 @@ class RunTests(unittest.TestCase):
         self.cache.put("foo", "[0-9]{3}")
         with self._timeout([]):
             out = self.run_cs("foo", ["foo bar"], FakeGen(None))
-        self.assertIn("text", out["items"][0]["subtitle"])
+        self.assertTrue(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("foo"))
 
     def test_timeout_with_hits_partial_not_cached(self):
@@ -117,7 +117,7 @@ class RunTests(unittest.TestCase):
         with self._timeout([hit]):
             out = cs.run("foo", db_path=path, cache=self.cache, generator=FakeGen("[0-9]{3}"))
         self.assertEqual(self.titles(out), ["123"])
-        self.assertIn("regex", out["items"][0]["subtitle"])
+        self.assertFalse(out["items"][0]["subtitle"].startswith("🔤 text"))
         self.assertIsNone(self.cache.get("foo"))
 
     def test_timeout_with_hits_deletes_cached(self):

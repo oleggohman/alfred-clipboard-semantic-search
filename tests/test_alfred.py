@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import time
 import unittest
 
@@ -72,13 +73,24 @@ class ToItemsTests(unittest.TestCase):
         item = alfred.to_items([make_hit()], "regex")["items"][0]
         self.assertEqual(item["uid"], "7")
         self.assertEqual(item["title"], "10.0.0.1")
-        self.assertEqual(item["arg"], "host 10.0.0.1 up")
+        self.assertEqual(item["arg"], "10.0.0.1")
         self.assertIs(item["valid"], True)
         self.assertEqual(item["text"], {"copy": "host 10.0.0.1 up", "largetype": "host 10.0.0.1 up"})
-        self.assertEqual(item["mods"]["cmd"], {"arg": "10.0.0.1", "subtitle": "Paste matched part only"})
-        self.assertEqual(
-            item["mods"]["alt"], {"arg": "host 10.0.0.1 up", "subtitle": "Copy full clip (no paste)"}
-        )
+        self.assertEqual(item["mods"], {"cmd": {"arg": "host 10.0.0.1 up", "subtitle": "Copy whole clip"}})
+
+    def test_arg_falls_back_to_clip_when_match_blank(self):
+        item = alfred.to_items([make_hit(item="whole clip", match="  ")], "text")["items"][0]
+        self.assertEqual(item["arg"], "whole clip")
+
+    def test_icon_when_app_path_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            item = alfred.to_items([make_hit(apppath=tmp)], "regex")["items"][0]
+        self.assertEqual(item["icon"], {"type": "fileicon", "path": tmp})
+
+    def test_no_icon_when_app_path_empty_or_missing(self):
+        for path in ("", os.path.join(tempfile.gettempdir(), "no-such-app-xyz.app")):
+            item = alfred.to_items([make_hit(apppath=path)], "regex")["items"][0]
+            self.assertNotIn("icon", item)
 
     def test_title_single_line_and_truncated(self):
         long = "a" * 300
@@ -92,32 +104,43 @@ class ToItemsTests(unittest.TestCase):
         self.assertEqual(item["title"], "whole clip")
 
     def test_subtitle_parts(self):
-        sub = alfred.to_items([make_hit(extra=2, ts=NOW_COCOA - 300)], "regex", now=NOW)["items"][0]["subtitle"]
-        self.assertEqual(sub, "🧠 regex · Slack · 5m ago · +2 more · host 10.0.0.1 up")
+        sub = alfred.to_items([make_hit(extra=2, ts=NOW_COCOA - 3 * 86400)], "regex", now=NOW)["items"][0]["subtitle"]
+        self.assertEqual(sub, "3d ago · +2 more · host 10.0.0.1 up")
 
     def test_subtitle_no_more_when_zero(self):
         sub = alfred.to_items([make_hit(extra=0)], "regex")["items"][0]["subtitle"]
         self.assertNotIn("more", sub)
 
     def test_subtitle_text_marker(self):
-        sub = alfred.to_items([make_hit()], "text")["items"][0]["subtitle"]
-        self.assertTrue(sub.startswith("🔤 text"))
+        sub = alfred.to_items([make_hit(ts=NOW_COCOA - 300)], "text", now=NOW)["items"][0]["subtitle"]
+        self.assertEqual(sub, "🔤 text · 5m ago · host 10.0.0.1 up")
 
-    def test_subtitle_empty_app_omitted(self):
-        sub = alfred.to_items([make_hit(app="", ts=NOW_COCOA - 300)], "regex", now=NOW)["items"][0]["subtitle"]
-        self.assertEqual(sub, "🧠 regex · 5m ago · host 10.0.0.1 up")
+    def test_subtitle_has_no_app_name(self):
+        sub = alfred.to_items([make_hit(app="Slack")], "regex")["items"][0]["subtitle"]
+        self.assertNotIn("Slack", sub)
+
+    def test_preview_omitted_when_title_starts_with_it(self):
+        sub = alfred.to_items([make_hit(item="10.0.0.1", match="10.0.0.1", ts=NOW_COCOA - 300)], "regex", now=NOW)[
+            "items"
+        ][0]["subtitle"]
+        self.assertEqual(sub, "5m ago")
+
+    def test_preview_omitted_for_long_single_line_clip(self):
+        hit = make_hit(item="a" * 200, match="")
+        sub = alfred.to_items([hit], "regex", now=NOW)["items"][0]["subtitle"]
+        self.assertNotIn("a" * 10, sub)
+
+    def test_preview_kept_when_different(self):
+        sub = alfred.to_items([make_hit(ts=NOW_COCOA - 300)], "regex", now=NOW)["items"][0]["subtitle"]
+        self.assertTrue(sub.endswith("host 10.0.0.1 up"))
 
     def test_null_or_bad_ts_does_not_raise(self):
         for ts in (None, "junk"):
             sub = alfred.to_items([make_hit(ts=ts)], "regex", now=NOW)["items"][0]["subtitle"]
-            self.assertEqual(sub, "🧠 regex · Slack · host 10.0.0.1 up")
-
-    def test_cmd_arg_falls_back_to_full_clip_when_match_empty(self):
-        item = alfred.to_items([make_hit(item="whole clip", match="")], "text")["items"][0]
-        self.assertEqual(item["mods"]["cmd"]["arg"], "whole clip")
+            self.assertEqual(sub, "host 10.0.0.1 up")
 
     def test_preview_collapsed_and_capped(self):
-        hit = make_hit(item="a\n\n  b " + "c" * 200)
+        hit = make_hit(item="a\n\n  b " + "c" * 200, match="zzz")
         sub = alfred.to_items([hit], "regex")["items"][0]["subtitle"]
         preview = sub.split(" · ")[-1]
         self.assertTrue(preview.startswith("a b c"))

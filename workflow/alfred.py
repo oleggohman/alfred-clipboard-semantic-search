@@ -1,6 +1,7 @@
 """Format search results as Alfred Script Filter JSON."""
 from __future__ import annotations
 
+import os
 import re
 import time
 from typing import List, Optional
@@ -8,7 +9,7 @@ from typing import List, Optional
 COCOA_EPOCH = 978307200
 TITLE_MAX = 120
 PREVIEW_MAX = 80
-MARKERS = {"regex": "🧠 regex", "text": "🔤 text"}
+MARKERS = {"text": "🔤 text"}
 
 
 def format_age(ts, now: Optional[float] = None) -> str:
@@ -36,27 +37,31 @@ def _oneline(text: str, limit: int) -> str:
 
 def _item(hit, mode: str, now: Optional[float] = None) -> dict:
     clip = hit.clip
-    parts = [MARKERS.get(mode, mode)]
-    if clip.app:
-        parts.append(clip.app)
-    date = format_age(clip.ts, now)
-    if date:
-        parts.append(date)
+    title = _oneline(hit.match, TITLE_MAX) or _oneline(clip.item, TITLE_MAX)
+    parts = []
+    if mode in MARKERS:
+        parts.append(MARKERS[mode])
+    age = format_age(clip.ts, now)
+    if age:
+        parts.append(age)
     if hit.extra > 0:
         parts.append(f"+{hit.extra} more")
-    parts.append(_oneline(clip.item, PREVIEW_MAX))
-    return {
+    preview = _oneline(clip.item, PREVIEW_MAX)
+    # titles and previews have different caps, so compare by prefix, not equality
+    if preview and not title.startswith(preview):
+        parts.append(preview)
+    item = {
         "uid": str(clip.rowid),
-        "title": _oneline(hit.match, TITLE_MAX) or _oneline(clip.item, TITLE_MAX),
+        "title": title,
         "subtitle": " · ".join(parts),
-        "arg": clip.item,
+        "arg": hit.match.strip() and hit.match or clip.item,
         "valid": True,
         "text": {"copy": clip.item, "largetype": clip.item},
-        "mods": {
-            "cmd": {"arg": hit.match or clip.item, "subtitle": "Paste matched part only"},
-            "alt": {"arg": clip.item, "subtitle": "Copy full clip (no paste)"},
-        },
+        "mods": {"cmd": {"arg": clip.item, "subtitle": "Copy whole clip"}},
     }
+    if clip.apppath and os.path.exists(clip.apppath):
+        item["icon"] = {"type": "fileicon", "path": clip.apppath}
+    return item
 
 
 def to_items(hits: List, mode: str, now: Optional[float] = None) -> dict:

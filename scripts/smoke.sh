@@ -26,10 +26,8 @@ hits = [i for i in items if i.get("valid")]
 if not hits:
     # message item: print only a fixed prefix (it can echo the query, never clip data)
     mode = "none (" + items[0]["title"].split("\x27")[0].strip() + ")"
-elif "regex" in hits[0]["subtitle"].split(" · ")[0]:
-    mode = "regex"
 else:
-    mode = "text"
+    mode = "text" if hits[0]["subtitle"].startswith("🔤 text") else "regex"
 try:
     with open(cache + "/regex_cache.json", encoding="utf-8") as f:
         regex = json.load(f).get(" ".join(query.lower().split()), "-")
