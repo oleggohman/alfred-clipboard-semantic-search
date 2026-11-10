@@ -128,7 +128,7 @@
 	</array>
 	<key>readme</key>
 	<string>Type "cs &lt;kind of data&gt;" (e.g. cs ip, cs email) to search clipboard history.
-Enter: copy matched value. Cmd+Enter: copy whole clip. Cmd+L: large type.
+Enter: copy matched value (whole clip in plain text fallback). Cmd+Enter: copy whole clip. Cmd+L: large type.
 Uses Apple's on-device model via /usr/bin/fm; falls back to plain text search.</string>
 	<key>uidata</key>
 	<dict>
