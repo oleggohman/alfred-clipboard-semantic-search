@@ -124,11 +124,11 @@
 - [x] run tests - must pass before task 5
 
 ### Task 5: Verify acceptance criteria
-- [ ] verify all requirements from Overview are implemented
-- [ ] run full test suite: `/usr/bin/python3 -m unittest discover -s tests -t . -v`
-- [ ] lint: `ruff check workflow tests` (if installed), `/usr/bin/python3 -m py_compile workflow/*.py`, `plutil -lint workflow/info.plist`
-- [ ] build: `./build.sh`
-- [ ] smoke: `scripts/smoke.sh "ip"` (sandbox disabled for real `fm`); confirm output shape only, never print clip contents
+- [x] verify all requirements from Overview are implemented
+- [x] run full test suite: `/usr/bin/python3 -m unittest discover -s tests -t . -v`
+- [x] lint: `ruff check workflow tests` (ruff not installed - skipped), `/usr/bin/python3 -m py_compile workflow/*.py`, `plutil -lint workflow/info.plist`
+- [x] build: `./build.sh`
+- [x] smoke: `scripts/smoke.sh "ip"` (sandbox disabled for real `fm`); confirm output shape only, never print clip contents
 
 ### Task 6: [Final] Update documentation
 - [x] README: key table (Enter copies matched value, ⌘Enter copies whole clip, ⌘L Large Type), remove ⌥Enter row
