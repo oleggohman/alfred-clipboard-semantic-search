@@ -12,3 +12,4 @@ Alfred 5 workflow (`cs <query>`) that searches clipboard history by kind of data
 - `fm` fails with ModelManagerError 1008 inside Claude's sandbox; run real-`fm` checks with the sandbox disabled. `CS_FM_PATH` overrides the binary.
 - Never commit clipboard contents, and never print them in logs, tests, docs or smoke output.
 - Work on a feature branch, Conventional Commits.
+- After every release, update the Notion page https://app.notion.com/p/425c389fdac081e0abced0bb2c31a5d9 (R&D > Applications): latest-version callout and a new Release history row.
